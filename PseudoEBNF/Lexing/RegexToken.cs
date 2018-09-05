@@ -1,10 +1,10 @@
-﻿using EBNF.Common;
+﻿using PseudoEBNF.Common;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace EBNF.Lexing
+namespace PseudoEBNF.Lexing
 {
     public class RegexToken : IToken
     {

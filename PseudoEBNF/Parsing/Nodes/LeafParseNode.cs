@@ -1,12 +1,12 @@
-﻿using EBNF.Lexing;
-using EBNF.Parsing.Rules;
+﻿using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Rules;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace EBNF.Parsing.Nodes
+namespace PseudoEBNF.Parsing.Nodes
 {
-    public class LeafNode : INode
+    public class LeafParseNode : IParseNode
     {
         public IRule Rule { get; }
         public Lexeme Lexeme { get; }
@@ -14,7 +14,7 @@ namespace EBNF.Parsing.Nodes
         public int Length => Lexeme.Length;
         public int LexemeCount { get; } = 1;
 
-        public LeafNode(IRule rule, Lexeme lexeme)
+        public LeafParseNode(IRule rule, Lexeme lexeme)
         {
             Rule = rule;
             Lexeme = lexeme;

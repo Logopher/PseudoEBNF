@@ -1,5 +1,5 @@
-﻿using EBNF.Common;
-using EBNF.Lexing;
+﻿using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;

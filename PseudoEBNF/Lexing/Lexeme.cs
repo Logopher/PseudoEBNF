@@ -1,4 +1,4 @@
-﻿namespace EBNF.Lexing
+﻿namespace PseudoEBNF.Lexing
 {
     public class Lexeme
     {

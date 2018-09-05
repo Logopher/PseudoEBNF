@@ -1,11 +1,11 @@
-﻿using EBNF.Parsing.Rules;
+﻿using PseudoEBNF.Parsing.Rules;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace EBNF.Parsing.Nodes
+namespace PseudoEBNF.Parsing.Nodes
 {
-    public interface INode
+    public interface IParseNode
     {
         IRule Rule { get; }
 

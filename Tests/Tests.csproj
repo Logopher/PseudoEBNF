@@ -49,14 +49,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Lexing.cs" />
+    <Compile Include="EbnfNodeType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Parsing.cs" />
+    <Compile Include="RuleActions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EBNF\EBNF.csproj">
+    <ProjectReference Include="..\PseudoEBNF\PseudoEBNF.csproj">
       <Project>{2ABA569E-372C-4C38-A460-75DD9998FC8D}</Project>
       <Name>EBNF</Name>
     </ProjectReference>

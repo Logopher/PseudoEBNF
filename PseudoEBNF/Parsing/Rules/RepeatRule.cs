@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using EBNF.Common;
-using EBNF.Lexing;
-using EBNF.Parsing.Nodes;
+using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Semantics;
 
-namespace EBNF.Parsing.Rules
+namespace PseudoEBNF.Parsing.Rules
 {
     public class RepeatRule : IRule
     {
@@ -17,11 +18,11 @@ namespace EBNF.Parsing.Rules
             this.rule = rule;
         }
 
-        public Match<INode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             var index = 0;
             var list = lexemes.ToList();
-            var results = new List<INode>();
+            var results = new List<IParseNode>();
 
             while (index < lexemes.Count)
             {
@@ -37,7 +38,7 @@ namespace EBNF.Parsing.Rules
                 }
             }
 
-            return new Match<INode>(new BranchNode(this, results), true);
+            return new Match<IParseNode>(new BranchParseNode(this, results), true);
         }
     }
 }

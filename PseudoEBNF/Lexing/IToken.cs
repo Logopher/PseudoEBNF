@@ -1,6 +1,6 @@
-﻿using EBNF.Common;
+﻿using PseudoEBNF.Common;
 
-namespace EBNF.Lexing
+namespace PseudoEBNF.Lexing
 {
     public interface IToken
     {

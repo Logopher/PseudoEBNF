@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using EBNF.Common;
-using EBNF.Lexing;
-using EBNF.Parsing.Nodes;
+using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Semantics;
 
-namespace EBNF.Parsing.Rules
+namespace PseudoEBNF.Parsing.Rules
 {
     public class OrRule : IRule
     {
@@ -26,18 +27,18 @@ namespace EBNF.Parsing.Rules
             });
         }
 
-        public Match<INode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             foreach(var rule in Children)
             {
                 var match = rule.Match(parser, lexemes);
                 if(match.Success)
                 {
-                    return new Match<INode>(match.Result, true);
+                    return new Match<IParseNode>(match.Result, true);
                 }
             }
 
-            return new Match<INode>(null, false);
+            return new Match<IParseNode>(null, false);
         }
     }
 }

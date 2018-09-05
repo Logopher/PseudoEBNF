@@ -1,4 +1,4 @@
-﻿namespace EBNF.Common
+﻿namespace PseudoEBNF.Common
 {
     public class Match<T>
     {

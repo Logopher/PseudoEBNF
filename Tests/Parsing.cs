@@ -2,12 +2,12 @@
 using System.Text;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using EBNF.Lexing;
+using PseudoEBNF.Lexing;
 using System.Linq;
-using EBNF;
-using EBNF.Common;
-using EBNF.Parsing.Rules;
-using EBNF.Parsing.Nodes;
+using PseudoEBNF;
+using PseudoEBNF.Common;
+using PseudoEBNF.Parsing.Rules;
+using PseudoEBNF.Parsing.Nodes;
 
 namespace Tests
 {
@@ -28,12 +28,12 @@ namespace Tests
                         new NameRule(RuleName.Identifier)
                             .And(new NameRule(RuleName.Identifier)))));
 
-            INode node;
+            IParseNode node;
 
-            node = parser.Parse("a");
+            node = parser.ParseSyntax("a");
             Assert.AreEqual(node.Length, 1);
 
-            node = parser.Parse("a b c");
+            node = parser.ParseSyntax("a b c");
             Assert.AreEqual(node.Length, 5);
         }
 
@@ -153,6 +153,23 @@ namespace Tests
                     .And(new NameRule(RuleName.Equals),
                         new NameRule(RuleName.Expression),
                         new NameRule(RuleName.Semicolon)));
+
+            parser.AttachAction(RuleName.Whitespace, RuleActions.Whitespace);
+
+            parser.AttachAction(RuleName.String, RuleActions.String);
+            parser.AttachAction(RuleName.Regex, RuleActions.Regex);
+            parser.AttachAction(RuleName.Identifier, RuleActions.Identifier);
+
+            parser.AttachAction(RuleName.Repeat, RuleActions.Repeat);
+            parser.AttachAction(RuleName.Optional, RuleActions.Optional);
+            parser.AttachAction(RuleName.Not, RuleActions.Not);
+            parser.AttachAction(RuleName.Group, RuleActions.Group);
+
+            parser.AttachAction(RuleName.And, RuleActions.And);
+            parser.AttachAction(RuleName.Or, RuleActions.Or);
+
+            parser.AttachAction(RuleName.Token, RuleActions.Token);
+            parser.AttachAction(RuleName.Rule, RuleActions.Rule);
 
             return parser;
         }

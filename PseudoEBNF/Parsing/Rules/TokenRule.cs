@@ -1,12 +1,13 @@
-﻿using EBNF.Common;
-using EBNF.Lexing;
-using EBNF.Parsing.Nodes;
+﻿using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace EBNF.Parsing.Rules
+namespace PseudoEBNF.Parsing.Rules
 {
     public class TokenRule : IRule
     {
@@ -17,16 +18,16 @@ namespace EBNF.Parsing.Rules
             Token = token;
         }
 
-        public Match<INode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             var first = lexemes.FirstOrDefault();
             if (first?.Token == Token)
             {
-                return new Match<INode>(new LeafNode(this, first), true);
+                return new Match<IParseNode>(new LeafParseNode(this, first), true);
             }
             else
             {
-                return new Match<INode>(null, false);
+                return new Match<IParseNode>(null, false);
             }
         }
     }

@@ -1,16 +1,17 @@
-﻿using EBNF.Common;
-using EBNF.Lexing;
-using EBNF.Parsing.Nodes;
-using EBNF.Parsing.Rules;
+﻿using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Rules;
+using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace EBNF
+namespace PseudoEBNF
 {
     public class Parser
     {
-        readonly Dictionary<string, IRule> rules = new Dictionary<string, IRule>();
+        readonly Dictionary<string, NamedRule> rules = new Dictionary<string, NamedRule>();
 
         public Lexer Lexer { get; }
 
@@ -31,29 +32,31 @@ namespace EBNF
             {
                 rule = rule.And(
                     new OptionalRule(
-                        GetTokenRule(RuleName.Whitespace)));
+                        GetRule(RuleName.Whitespace)));
             }
 
-            rules.Add(name, rule);
+            rules.Add(name, new NamedRule(name, rule));
         }
 
-        public IRule GetRule(string name)
+        public NamedRule GetRule(string name)
         {
-            if (!rules.TryGetValue(name, out IRule result))
+            if (!rules.TryGetValue(name, out NamedRule result))
             {
-                result = GetTokenRule(name);
-                if (result != null)
+                var temp = GetTokenRule(name);
+                if (temp != null)
                 {
                     if (Lexer.ImplicitWhitespace && name != RuleName.Whitespace)
                     {
-                        result = new OptionalRule(
-                                GetTokenRule(RuleName.Whitespace))
-                            .And(result);
+                        temp = new OptionalRule(
+                                GetRule(RuleName.Whitespace))
+                            .And(temp);
                     }
 
+                    result = new NamedRule(name, temp);
                     rules.Add(name, result);
                 }
             }
+
             return result;
         }
 
@@ -85,23 +88,32 @@ namespace EBNF
             return new TokenRule(token);
         }
 
-        public INode Parse(string input)
+        public ISemanticNode Parse(string input)
+        {
+            var parseTree = ParseSyntax(input);
+            
+            var semanticTree = ParseSemantics(parseTree);
+
+            return semanticTree;
+        }
+
+        public IParseNode ParseSyntax(string input)
         {
             var lexemes = Lexer.Lex(input).ToList();
 
-            var result = Parse(lexemes);
+            var parseTree = ParseSyntax(lexemes);
 
-            if(result == null || result.Length < input.Length)
+            if (parseTree == null || parseTree.Length != input.Length)
             {
                 return null;
             }
 
-            return result;
+            return parseTree;
         }
 
-        INode Parse(List<Lexeme> lexemes)
+        IParseNode ParseSyntax(List<Lexeme> lexemes)
         {
-            var rootRule = new NameRule(RuleName.Root);
+            var rootRule = GetRule(RuleName.Root);
             var match = rootRule.Match(this, lexemes);
             if (match.Success)
             {
@@ -111,6 +123,18 @@ namespace EBNF
             {
                 return null;
             }
+        }
+
+        ISemanticNode ParseSemantics(IParseNode node)
+        {
+            var rule = (NamedRule)node.Rule;
+
+            return rule.Action(node, ParseSemantics);
+        }
+
+        public void AttachAction(string name, Func<IParseNode, Func<IParseNode, ISemanticNode>, ISemanticNode> action)
+        {
+            GetRule(name).AttachAction(action);
         }
     }
 }

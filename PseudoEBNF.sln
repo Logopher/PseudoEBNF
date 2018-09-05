@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EBNF", "EBNF\EBNF.csproj", "{2ABA569E-372C-4C38-A460-75DD9998FC8D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PseudoEBNF", "PseudoEBNF\PseudoEBNF.csproj", "{2ABA569E-372C-4C38-A460-75DD9998FC8D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{A9FA492D-2552-4A84-B928-04BBC018F084}"
 EndProject

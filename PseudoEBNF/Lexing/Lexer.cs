@@ -1,10 +1,11 @@
-﻿using EBNF.Common;
+﻿using PseudoEBNF.Common;
+using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace EBNF.Lexing
+namespace PseudoEBNF.Lexing
 {
     public class Lexer
     {

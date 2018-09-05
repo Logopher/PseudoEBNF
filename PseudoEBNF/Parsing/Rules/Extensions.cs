@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
-namespace EBNF.Parsing.Rules
+namespace PseudoEBNF.Parsing.Rules
 {
     public static class Extensions
     {

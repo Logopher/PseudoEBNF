@@ -1,12 +1,13 @@
-﻿using EBNF.Common;
-using EBNF.Lexing;
-using EBNF.Parsing.Nodes;
+﻿using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace EBNF.Parsing.Rules
+namespace PseudoEBNF.Parsing.Rules
 {
     public class AndRule : IRule
     {
@@ -27,10 +28,10 @@ namespace EBNF.Parsing.Rules
             });
         }
 
-        public Match<INode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             var index = 0;
-            var results = new List<INode>();
+            var results = new List<IParseNode>();
 
             foreach (var rule in Children)
             {
@@ -45,11 +46,11 @@ namespace EBNF.Parsing.Rules
                 }
                 else
                 {
-                    return new Match<INode>(null, false);
+                    return new Match<IParseNode>(null, false);
                 }
             }
 
-            return new Match<INode>(new BranchNode(this, results), true);
+            return new Match<IParseNode>(new BranchParseNode(this, results), true);
         }
     }
 }

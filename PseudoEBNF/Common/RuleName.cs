@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace EBNF.Common
+namespace PseudoEBNF.Common
 {
     public static class RuleName
     {
