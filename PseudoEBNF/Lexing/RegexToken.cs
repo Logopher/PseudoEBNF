@@ -15,7 +15,7 @@ namespace PseudoEBNF.Lexing
         public RegexToken(string name, string pattern)
         {
             Name = name;
-            Regex = new Regex($"^{pattern}");
+            Regex = new Regex($"^{pattern}", RegexOptions.Compiled);
         }
 
         public Match<Lexeme> Match(string input, int index)

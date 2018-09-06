@@ -27,6 +27,11 @@ namespace PseudoEBNF.Parsing.Rules
             });
         }
 
+        public IEnumerable<IRule> GetChildren(Parser parser)
+        {
+            return Children;
+        }
+
         public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             foreach(var rule in Children)

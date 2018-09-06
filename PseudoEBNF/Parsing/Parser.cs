@@ -12,27 +12,28 @@ namespace PseudoEBNF
     public class Parser
     {
         readonly Dictionary<string, NamedRule> rules = new Dictionary<string, NamedRule>();
+        readonly List<string> insignificantRules = new List<string>();
+        public IReadOnlyList<string> InsignificantRules => insignificantRules.Union(Lexer.InsignificantTokens).ToList();
 
         public Lexer Lexer { get; }
 
         public Parser(Lexer lexer)
         {
             Lexer = lexer;
-            Lexer.Lock();
+            //Lexer.Lock();
         }
 
         public void Define(string name, IRule rule)
         {
-            if(Lexer.GetToken(name) != null)
+            if (Lexer.GetToken(name) != null)
             {
                 throw new Exception();
             }
 
-            if(Lexer.ImplicitWhitespace && name == RuleName.Root)
+            if (name == RuleName.Root)
             {
-                rule = rule.And(
-                    new OptionalRule(
-                        GetRule(RuleName.Whitespace)));
+                var rules = InsignificantRules.Select(GetRule);
+                rule = rule.And(new OptionalRule(new OrRule(rules)));
             }
 
             rules.Add(name, new NamedRule(name, rule));
@@ -45,10 +46,9 @@ namespace PseudoEBNF
                 var temp = GetTokenRule(name);
                 if (temp != null)
                 {
-                    if (Lexer.ImplicitWhitespace && name != RuleName.Whitespace)
+                    if (!InsignificantRules.Contains(name))
                     {
-                        temp = new OptionalRule(
-                                GetRule(RuleName.Whitespace))
+                        temp = new NameRule(RuleName.Insignificant)
                             .And(temp);
                     }
 
@@ -62,7 +62,7 @@ namespace PseudoEBNF
 
         IRule GetTokenRule(string name)
         {
-            if(name == null)
+            if (name == null)
             {
                 throw new ArgumentNullException(nameof(name));
             }
@@ -91,7 +91,7 @@ namespace PseudoEBNF
         public ISemanticNode Parse(string input)
         {
             var parseTree = ParseSyntax(input);
-            
+
             var semanticTree = ParseSemantics(parseTree);
 
             return semanticTree;
@@ -99,6 +99,13 @@ namespace PseudoEBNF
 
         public IParseNode ParseSyntax(string input)
         {
+            Define(RuleName.Insignificant,
+                new RepeatRule(
+                    new OrRule(InsignificantRules
+                        .Select(GetRule))));
+
+            AttachAction(RuleName.Insignificant, (n, r) => null);
+
             var lexemes = Lexer.Lex(input).ToList();
 
             var parseTree = ParseSyntax(lexemes);
@@ -127,14 +134,31 @@ namespace PseudoEBNF
 
         ISemanticNode ParseSemantics(IParseNode node)
         {
-            var rule = (NamedRule)node.Rule;
-
-            return rule.Action(node, ParseSemantics);
+            if (node.Rule is NamedRule named)
+            {
+                return named.Action(node, ParseSemantics);
+            }
+            else
+            {
+                throw new Exception();
+            }
         }
 
         public void AttachAction(string name, Func<IParseNode, Func<IParseNode, ISemanticNode>, ISemanticNode> action)
         {
             GetRule(name).AttachAction(action);
+        }
+
+        public void MarkRuleInsignificant(string name)
+        {
+            if (Lexer.GetToken(name) != null)
+            {
+                Lexer.MarkTokenInsignificant(name);
+            }
+            else
+            {
+                insignificantRules.Add(name);
+            }
         }
     }
 }

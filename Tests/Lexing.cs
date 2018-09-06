@@ -13,21 +13,22 @@ namespace Tests
         [TestMethod]
         public void ImplicitWhitespace()
         {
-            Lexer lexer = new Lexer(true);
+            Lexer lexer = new Lexer();
+            lexer.MarkTokenInsignificant(RuleName.Whitespace);
 
             List<Lexeme> lexemes;
 
             lexer.DefineRegex(RuleName.Identifier, @"\w+");
 
-            Assert.ThrowsException<NullReferenceException>(() =>
+            lexemes = lexer.Lex("a").ToList();
+            Assert.AreEqual(lexemes.Count, 1);
+
+            Assert.ThrowsException<Exception>(() =>
             {
-                lexer.Lex("a").ToList();
+                lexer.Lex("a b c").ToList();
             });
 
             lexer.DefineRegex(RuleName.Whitespace, @"\s+");
-
-            lexemes = lexer.Lex("a").ToList();
-            Assert.AreEqual(lexemes.Count, 1);
 
             lexemes = lexer.Lex("a b c").ToList();
             Assert.AreEqual(lexemes.Count, 5);
@@ -36,7 +37,7 @@ namespace Tests
         [TestMethod]
         public void ExplicitWhitespace()
         {
-            Lexer lexer = new Lexer(false);
+            Lexer lexer = new Lexer();
 
             List<Lexeme> lexemes;
 

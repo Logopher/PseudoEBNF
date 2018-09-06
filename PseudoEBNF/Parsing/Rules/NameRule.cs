@@ -19,6 +19,11 @@ namespace PseudoEBNF.Parsing.Rules
             Name = name;
         }
 
+        public IEnumerable<IRule> GetChildren(Parser parser)
+        {
+            return new[] { parser.GetRule(Name) };
+        }
+
         public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             Debug.WriteLine($"? {Name} {string.Join(" ", lexemes.Select(n => n.MatchedText))}");

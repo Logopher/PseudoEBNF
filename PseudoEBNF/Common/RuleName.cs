@@ -29,9 +29,12 @@ namespace PseudoEBNF.Common
         public static readonly string SimpleExpression = "simpleExpr";
         public static readonly string Expression = "expr";
 
+        public static readonly string LineComment = "lineComment";
         public static readonly string Token = "token";
         public static readonly string Rule = "rule";
         public static readonly string Assignment = "assign";
         public static readonly string Root = "root";
+        
+        public static readonly string Insignificant = "insig";
     }
 }

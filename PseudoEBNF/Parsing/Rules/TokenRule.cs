@@ -18,6 +18,11 @@ namespace PseudoEBNF.Parsing.Rules
             Token = token;
         }
 
+        public IEnumerable<IRule> GetChildren(Parser parser)
+        {
+            return null;
+        }
+
         public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             var first = lexemes.FirstOrDefault();

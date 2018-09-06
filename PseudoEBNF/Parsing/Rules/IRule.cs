@@ -10,6 +10,8 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public interface IRule
     {
+        IEnumerable<IRule> GetChildren(Parser parser);
+
         Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes);
     }
 }

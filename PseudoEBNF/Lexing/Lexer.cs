@@ -1,22 +1,26 @@
 ﻿using PseudoEBNF.Common;
-using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace PseudoEBNF.Lexing
 {
     public class Lexer
     {
-        IToken Whitespace => GetToken(RuleName.Whitespace);
         readonly Dictionary<string, IToken> tokens = new Dictionary<string, IToken>();
-        public bool ImplicitWhitespace { get; }
+        readonly List<string> insignificantTokens = new List<string>();
+        public IReadOnlyList<string> InsignificantTokens => insignificantTokens;
+
         public bool IsLocked { get; private set; }
 
-        public Lexer(bool implicitWhitespace = false)
+        public Lexer()
         {
-            ImplicitWhitespace = implicitWhitespace;
+
+        }
+
+        public void MarkTokenInsignificant(string name)
+        {
+            insignificantTokens.Add(name);
         }
 
         public IEnumerable<Lexeme> Lex(string input)
@@ -25,9 +29,9 @@ namespace PseudoEBNF.Lexing
             var index = 0;
             while (index < input.Length)
             {
-                if (ImplicitWhitespace)
+                foreach (var token in insignificantTokens.Select(GetToken).Where(t => t != null))
                 {
-                    var match = Whitespace.Match(input, index);
+                    var match = token.Match(input, index);
                     if (match.Success)
                     {
                         var lexeme = match.Result;

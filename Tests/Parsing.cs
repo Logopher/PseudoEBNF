@@ -17,10 +17,48 @@ namespace Tests
     [TestClass]
     public class Parsing
     {
+        ParserGenerator parserGen;
+
+        [TestInitialize]
+        public void Init()
+        {
+            parserGen = new ParserGenerator();
+        }
+
         [TestMethod]
         public void ImplicitWhitespace()
         {
-            var parser = GetEbnfParser();
+            var parser = parserGen.SpawnParser($@"
+{RuleName.Equals} = ""="";
+{RuleName.Pipe} = ""|"";
+{RuleName.Asterisk} = ""*"";
+{RuleName.QuestionMark} = ""?"";
+{RuleName.ExclamationPoint} = ""!"";
+{RuleName.Semicolon} = "";"";
+
+{RuleName.Whitespace} = /\s+/;
+{RuleName.Identifier} = /\w(?:\w|\d)*/;
+{RuleName.String} = /""(\\[^""]|\\""|[^""])*""/;
+{RuleName.Regex} = /\/(\\[^\/]|\\\/|[^\/])+\//;
+
+{RuleName.And} = {RuleName.SimpleExpression} {RuleName.Expression};
+{RuleName.Or} = {RuleName.SimpleExpression} {RuleName.Pipe} {RuleName.Expression};
+{RuleName.Not} = {RuleName.ExclamationPoint} {RuleName.Expression};
+{RuleName.Optional} = {RuleName.QuestionMark} {RuleName.Expression};
+{RuleName.Repeat} = {RuleName.Asterisk} {RuleName.Expression};
+{RuleName.Group} = {RuleName.LeftParenthesis} {RuleName.Expression} {RuleName.RightParenthesis};
+
+{RuleName.Literal} = {RuleName.String} {RuleName.Pipe} {RuleName.Regex};
+{RuleName.SimpleExpression} = {RuleName.Not} {RuleName.Pipe} {RuleName.Optional} {RuleName.Pipe} {RuleName.Repeat} {RuleName.Pipe} {RuleName.Group};
+{RuleName.Expression} = {RuleName.Or} {RuleName.Pipe} {RuleName.And} {RuleName.Pipe} {RuleName.SimpleExpression};
+
+{RuleName.Token} = {RuleName.Identifier} {RuleName.Equals} {RuleName.Literal} {RuleName.Semicolon};
+{RuleName.Rule} = {RuleName.Identifier} {RuleName.Equals} {RuleName.Expression} {RuleName.Semicolon};
+
+{RuleName.Assignment} = {RuleName.Token} {RuleName.Pipe} {RuleName.Rule};
+//{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
+{RuleName.Root} = {RuleName.Identifier} *({RuleName.Identifier} {RuleName.Identifier});
+");
 
             parser.Define(RuleName.Root,
                 new NameRule(RuleName.Identifier)
@@ -80,9 +118,16 @@ namespace Tests
             node.ToString();
         }
 
+        Parser GetJsParser()
+        {
+            var parser = GetEbnfParser();
+            return null;
+        }
+
         Parser GetEbnfParser()
         {
-            var lexer = new Lexer(true);
+            var lexer = new Lexer();
+            lexer.MarkTokenInsignificant(RuleName.Whitespace);
 
             lexer.DefineString(RuleName.Equals, @"=");
             lexer.DefineString(RuleName.Pipe, @"|");

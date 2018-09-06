@@ -24,6 +24,11 @@ namespace PseudoEBNF.Parsing.Rules
             Rule = rule;
         }
 
+        public IEnumerable<IRule> GetChildren(Parser parser)
+        {
+            return new[] { Rule };
+        }
+
         public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
         {
             var match = Rule.Match(parser, lexemes);
