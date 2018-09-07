@@ -18,12 +18,12 @@ namespace PseudoEBNF.Parsing.Rules
             this.rule = rule;
         }
 
-        public IEnumerable<IRule> GetChildren(Parser parser)
+        public IRule Clone()
         {
-            return new[] { rule };
+            return new RepeatRule(rule.Clone());
         }
 
-        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
             var index = 0;
             var list = lexemes.ToList();
@@ -31,7 +31,7 @@ namespace PseudoEBNF.Parsing.Rules
 
             while (index < lexemes.Count)
             {
-                var match = rule.Match(parser, list.GetRange(index, list.Count - index));
+                var match = rule.Match(grammar, list.GetRange(index, list.Count - index));
                 if (match.Success)
                 {
                     results.Add(match.Result);

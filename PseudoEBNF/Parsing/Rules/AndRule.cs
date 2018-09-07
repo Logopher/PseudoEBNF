@@ -11,36 +11,38 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class AndRule : IRule
     {
-        public IEnumerable<IRule> Children { get; }
+        public IList<IRule> Children { get; }
 
         public AndRule(IEnumerable<IRule> rules)
         {
-            Children = rules.SelectMany(r =>
-            {
-                if (r is AndRule and)
+            Children = rules
+                .SelectMany(r =>
                 {
-                    return and.Children;
-                }
-                else
-                {
-                    return new[] { r };
-                }
-            });
+                    if (r is AndRule and)
+                    {
+                        return and.Children;
+                    }
+                    else
+                    {
+                        return new[] { r };
+                    }
+                })
+                .ToList();
         }
 
-        public IEnumerable<IRule> GetChildren(Parser parser)
+        public IRule Clone()
         {
-            return Children;
+            return new AndRule(Children.Select(n => n.Clone()));
         }
 
-        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
             var index = 0;
             var results = new List<IParseNode>();
-            
+
             foreach (var rule in Children)
             {
-                var match = rule.Match(parser, lexemes.GetRange(index, lexemes.Count - index));
+                var match = rule.Match(grammar, lexemes.GetRange(index, lexemes.Count - index));
                 if (match.Success)
                 {
                     if (match.Result != null)

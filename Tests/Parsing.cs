@@ -1,13 +1,10 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PseudoEBNF.Lexing;
-using System.Linq;
 using PseudoEBNF;
 using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing;
 
 namespace Tests
 {
@@ -57,14 +54,8 @@ namespace Tests
 
 {RuleName.Assignment} = {RuleName.Token} {RuleName.Pipe} {RuleName.Rule};
 //{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
-{RuleName.Root} = {RuleName.Identifier} *({RuleName.Identifier} {RuleName.Identifier});
+{RuleName.Root} = {RuleName.Identifier} ?({RuleName.Identifier} {RuleName.Identifier});
 ");
-
-            parser.Define(RuleName.Root,
-                new NameRule(RuleName.Identifier)
-                    .And(new OptionalRule(
-                        new NameRule(RuleName.Identifier)
-                            .And(new NameRule(RuleName.Identifier)))));
 
             IParseNode node;
 
@@ -78,13 +69,9 @@ namespace Tests
         [TestMethod]
         public void Ebnf()
         {
-            var parser = GetEbnfParser();
+            var parserGen = new ParserGenerator();
             
-            parser.Define(RuleName.Root,
-                new RepeatRule(new NameRule(RuleName.Token)
-                    .Or(new NameRule(RuleName.Rule))));
-
-            var node = parser.Parse($@"
+            var parser = parserGen.SpawnParser($@"
 {RuleName.Equals} = ""="";
 {RuleName.Pipe} = ""|"";
 {RuleName.Asterisk} = ""*"";
@@ -112,10 +99,11 @@ namespace Tests
 {RuleName.Rule} = {RuleName.Identifier} {RuleName.Equals} {RuleName.Expression} {RuleName.Semicolon};
 
 {RuleName.Assignment} = {RuleName.Token} {RuleName.Pipe} {RuleName.Rule};
+//{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 {RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 ");
 
-            node.ToString();
+            parser.ToString();
         }
 
         Parser GetJsParser()
@@ -126,74 +114,73 @@ namespace Tests
 
         Parser GetEbnfParser()
         {
-            var lexer = new Lexer();
-            lexer.MarkTokenInsignificant(RuleName.Whitespace);
+            var parser = new Parser();
 
-            lexer.DefineString(RuleName.Equals, @"=");
-            lexer.DefineString(RuleName.Pipe, @"|");
-            lexer.DefineString(RuleName.Asterisk, @"*");
-            lexer.DefineString(RuleName.QuestionMark, @"?");
-            lexer.DefineString(RuleName.ExclamationPoint, @"!");
-            lexer.DefineString(RuleName.Semicolon, @";");
-            lexer.DefineString(RuleName.LeftParenthesis, @"(");
-            lexer.DefineString(RuleName.RightParenthesis, @")");
+            parser.SetImplicit(RuleName.Whitespace);
 
-            lexer.DefineRegex(RuleName.Whitespace, @"\s+");
-            lexer.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
-            lexer.DefineRegex(RuleName.String, @"""(\\[^""]|\\""|[^""])*""");
-            lexer.DefineRegex(RuleName.Regex, @"/(\\[^/]|\\/|[^/])*/");
+            parser.DefineString(RuleName.Equals, @"=");
+            parser.DefineString(RuleName.Pipe, @"|");
+            parser.DefineString(RuleName.Asterisk, @"*");
+            parser.DefineString(RuleName.QuestionMark, @"?");
+            parser.DefineString(RuleName.ExclamationPoint, @"!");
+            parser.DefineString(RuleName.Semicolon, @";");
+            parser.DefineString(RuleName.LeftParenthesis, @"(");
+            parser.DefineString(RuleName.RightParenthesis, @")");
 
-            var parser = new Parser(lexer);
+            parser.DefineRegex(RuleName.Whitespace, @"\s+");
+            parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
+            parser.DefineRegex(RuleName.String, @"""(\\[^""]|\\""|[^""])*""");
+            parser.DefineRegex(RuleName.Regex, @"/(\\[^/]|\\/|[^/])*/");
 
-            parser.Define(RuleName.And,
+            parser.DefineRule(RuleName.And,
                 new NameRule(RuleName.SimpleExpression)
                     .And(new NameRule(RuleName.Expression)));
 
-            parser.Define(RuleName.Or,
+            parser.DefineRule(RuleName.Or,
                 new NameRule(RuleName.SimpleExpression)
                     .And(new NameRule(RuleName.Pipe),
                         new NameRule(RuleName.Expression)));
 
-            parser.Define(RuleName.Not,
+            parser.DefineRule(RuleName.Not,
                 new NameRule(RuleName.ExclamationPoint)
                     .And(new NameRule(RuleName.Expression)));
 
-            parser.Define(RuleName.Optional,
+            parser.DefineRule(RuleName.Optional,
                 new NameRule(RuleName.QuestionMark)
                     .And(new NameRule(RuleName.Expression)));
 
-            parser.Define(RuleName.Repeat,
+            parser.DefineRule(RuleName.Repeat,
                 new NameRule(RuleName.Asterisk)
                     .And(new NameRule(RuleName.Expression)));
 
-            parser.Define(RuleName.Group,
+            parser.DefineRule(RuleName.Group,
                 new NameRule(RuleName.LeftParenthesis)
                     .And(new NameRule(RuleName.Expression),
                         new NameRule(RuleName.RightParenthesis)));
 
-            parser.Define(RuleName.Literal,
+            parser.DefineRule(RuleName.Literal,
                 new NameRule(RuleName.String)
                     .Or(new NameRule(RuleName.Regex)));
 
-            parser.Define(RuleName.SimpleExpression,
+            parser.DefineRule(RuleName.SimpleExpression,
                 new NameRule(RuleName.Optional)
                     .Or(new NameRule(RuleName.Repeat),
                         new NameRule(RuleName.Not),
                         new NameRule(RuleName.Group),
                         new NameRule(RuleName.Identifier)));
 
-            parser.Define(RuleName.Expression,
+            parser.DefineRule(RuleName.Expression,
                 new NameRule(RuleName.Or)
                     .Or(new NameRule(RuleName.And),
                         new NameRule(RuleName.SimpleExpression)));
 
-            parser.Define(RuleName.Token,
+            parser.DefineRule(RuleName.Token,
                 new NameRule(RuleName.Identifier)
                     .And(new NameRule(RuleName.Equals),
                         new NameRule(RuleName.Literal),
                         new NameRule(RuleName.Semicolon)));
 
-            parser.Define(RuleName.Rule,
+            parser.DefineRule(RuleName.Rule,
                 new NameRule(RuleName.Identifier)
                     .And(new NameRule(RuleName.Equals),
                         new NameRule(RuleName.Expression),

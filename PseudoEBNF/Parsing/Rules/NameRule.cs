@@ -16,21 +16,26 @@ namespace PseudoEBNF.Parsing.Rules
 
         public NameRule(string name)
         {
+            if(name == RuleName.Root)
+            {
+                throw new Exception();
+            }
+
             Name = name;
         }
 
-        public IEnumerable<IRule> GetChildren(Parser parser)
+        public IRule Clone()
         {
-            return new[] { parser.GetRule(Name) };
+            return new NameRule(Name);
         }
 
-        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
             Debug.WriteLine($"? {Name} {string.Join(" ", lexemes.Select(n => n.MatchedText))}");
 
-            var rule = parser.GetRule(Name);
+            var rule = grammar.GetRule(Name);
 
-            var match = rule.Match(parser, lexemes);
+            var match = rule.Match(grammar, lexemes);
             if (match.Success)
             {
                 Debug.WriteLine($"+ {Name}");

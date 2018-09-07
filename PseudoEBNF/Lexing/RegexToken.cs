@@ -8,14 +8,27 @@ namespace PseudoEBNF.Lexing
 {
     public class RegexToken : IToken
     {
+        public Guid Guid { get; }
+
         public string Name { get; }
 
         public Regex Regex { get; }
 
-        public RegexToken(string name, string pattern)
+        RegexToken(Guid guid, string name, Regex regex)
         {
+            Guid = guid;
             Name = name;
-            Regex = new Regex($"^{pattern}", RegexOptions.Compiled);
+            Regex = regex;
+        }
+
+        public RegexToken(string name, string pattern)
+            : this(Guid.NewGuid(), name, new Regex($"^{pattern}", RegexOptions.Compiled))
+        {
+        }
+
+        public IToken Clone()
+        {
+            return new RegexToken(Guid, Name, Regex);
         }
 
         public Match<Lexeme> Match(string input, int index)

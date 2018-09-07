@@ -35,6 +35,6 @@ namespace PseudoEBNF.Common
         public static readonly string Assignment = "assign";
         public static readonly string Root = "root";
         
-        public static readonly string Insignificant = "insig";
+        public static readonly string Implicit = "im";
     }
 }

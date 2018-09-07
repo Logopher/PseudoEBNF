@@ -17,14 +17,14 @@ namespace PseudoEBNF.Parsing.Rules
             this.rule = rule;
         }
 
-        public IEnumerable<IRule> GetChildren(Parser parser)
+        public IRule Clone()
         {
-            return new[] { rule };
+            return new NotRule(rule.Clone());
         }
 
-        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
-            var match = rule.Match(parser, lexemes);
+            var match = rule.Match(grammar, lexemes);
             if (match.Success)
             {
                 return new Match<IParseNode>(match.Result, false);

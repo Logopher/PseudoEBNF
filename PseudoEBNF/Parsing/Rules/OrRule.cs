@@ -10,34 +10,36 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class OrRule : IRule
     {
-        public IEnumerable<IRule> Children { get; }
+        public IList<IRule> Children { get; }
 
         public OrRule(IEnumerable<IRule> rules)
         {
-            Children = rules.SelectMany(r =>
-            {
-                if (r is OrRule or)
+            Children = rules
+                .SelectMany(r =>
                 {
-                    return or.Children;
-                }
-                else
-                {
-                    return new[] { r };
-                }
-            });
+                    if (r is OrRule or)
+                    {
+                        return or.Children;
+                    }
+                    else
+                    {
+                        return new[] { r };
+                    }
+                })
+                .ToList();
         }
 
-        public IEnumerable<IRule> GetChildren(Parser parser)
+        public IRule Clone()
         {
-            return Children;
+            return new OrRule(Children.Select(n => n.Clone()));
         }
 
-        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
-            foreach(var rule in Children)
+            foreach (var rule in Children)
             {
-                var match = rule.Match(parser, lexemes);
-                if(match.Success)
+                var match = rule.Match(grammar, lexemes);
+                if (match.Success)
                 {
                     return new Match<IParseNode>(match.Result, true);
                 }

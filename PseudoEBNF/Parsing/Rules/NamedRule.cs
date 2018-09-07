@@ -24,14 +24,15 @@ namespace PseudoEBNF.Parsing.Rules
             Rule = rule;
         }
 
-        public IEnumerable<IRule> GetChildren(Parser parser)
+        NamedRule(string name, IRule rule, Func<IParseNode, Func<IParseNode, ISemanticNode>, ISemanticNode> action)
+            : this(name, rule)
         {
-            return new[] { Rule };
+            AttachAction(action);
         }
 
-        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
-            var match = Rule.Match(parser, lexemes);
+            var match = Rule.Match(grammar, lexemes);
             if (match.Success)
             {
                 return new Match<IParseNode>(new BranchParseNode(this, new[] { match.Result }), true);
@@ -40,6 +41,11 @@ namespace PseudoEBNF.Parsing.Rules
             {
                 return new Match<IParseNode>(null, false);
             }
+        }
+
+        public IRule Clone()
+        {
+            return new NamedRule(Name, Rule.Clone(), Action);
         }
 
         public void AttachAction(Func<IParseNode, Func<IParseNode, ISemanticNode>, ISemanticNode> action)

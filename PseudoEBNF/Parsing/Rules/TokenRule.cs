@@ -18,15 +18,15 @@ namespace PseudoEBNF.Parsing.Rules
             Token = token;
         }
 
-        public IEnumerable<IRule> GetChildren(Parser parser)
+        public IRule Clone()
         {
-            return null;
+            return new TokenRule(Token.Clone());
         }
 
-        public Match<IParseNode> Match(Parser parser, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
             var first = lexemes.FirstOrDefault();
-            if (first?.Token == Token)
+            if (first?.Token.Guid == Token.Guid)
             {
                 return new Match<IParseNode>(new LeafParseNode(this, first), true);
             }

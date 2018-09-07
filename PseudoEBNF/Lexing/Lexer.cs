@@ -7,20 +7,31 @@ namespace PseudoEBNF.Lexing
 {
     public class Lexer
     {
-        readonly Dictionary<string, IToken> tokens = new Dictionary<string, IToken>();
-        readonly List<string> insignificantTokens = new List<string>();
-        public IReadOnlyList<string> InsignificantTokens => insignificantTokens;
+        Grammar grammar;
 
-        public bool IsLocked { get; private set; }
-
-        public Lexer()
+        public Lexer(Grammar grammar)
         {
-
+            this.grammar = grammar;
         }
 
-        public void MarkTokenInsignificant(string name)
+        public Lexer()
+            : this(new Grammar())
         {
-            insignificantTokens.Add(name);
+        }
+
+        public void SetImplicit(string name)
+        {
+            grammar.SetImplicit(name);
+        }
+
+        public void DefineRegex(string name, string pattern)
+        {
+            grammar.DefineRegex(name, pattern);
+        }
+
+        public void DefineString(string name, string text)
+        {
+            grammar.DefineString(name, text);
         }
 
         public IEnumerable<Lexeme> Lex(string input)
@@ -29,7 +40,7 @@ namespace PseudoEBNF.Lexing
             var index = 0;
             while (index < input.Length)
             {
-                foreach (var token in insignificantTokens.Select(GetToken).Where(t => t != null))
+                foreach (var token in grammar.ImplicitNames.Select(GetToken).Where(t => t != null))
                 {
                     var match = token.Match(input, index);
                     if (match.Success)
@@ -40,7 +51,7 @@ namespace PseudoEBNF.Lexing
                     }
                 }
 
-                foreach (var pair in tokens)
+                foreach (var pair in grammar.Tokens)
                 {
                     var name = pair.Key;
                     var token = pair.Value;
@@ -65,7 +76,7 @@ namespace PseudoEBNF.Lexing
 
         public IToken GetToken(string name)
         {
-            if (tokens.TryGetValue(name, out IToken token))
+            if (grammar.Tokens.TryGetValue(name, out IToken token))
             {
                 return token;
             }
@@ -73,32 +84,6 @@ namespace PseudoEBNF.Lexing
             {
                 return null;
             }
-        }
-
-        public IToken DefineString(string name, string text)
-        {
-            return Define(name, new StringToken(name, text));
-        }
-
-        public IToken DefineRegex(string name, string pattern)
-        {
-            return Define(name, new RegexToken(name, pattern));
-        }
-
-        IToken Define(string name, IToken token)
-        {
-            if (IsLocked)
-            {
-                throw new Exception();
-            }
-
-            tokens.Add(name, token);
-            return token;
-        }
-
-        public void Lock()
-        {
-            IsLocked = true;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Tests
         public void ImplicitWhitespace()
         {
             Lexer lexer = new Lexer();
-            lexer.MarkTokenInsignificant(RuleName.Whitespace);
+            lexer.SetImplicit(RuleName.Whitespace);
 
             List<Lexeme> lexemes;
 
@@ -51,7 +51,7 @@ namespace Tests
                 lexer.Lex("a b c").ToList();
             });
 
-            lexer.DefineRegex(RuleName.Whitespace, @"[ \t]+");
+            lexer.DefineRegex(RuleName.Whitespace, @"\s+");
 
             lexemes = lexer.Lex("a b c").ToList();
             Assert.AreEqual(lexemes.Count, 5);

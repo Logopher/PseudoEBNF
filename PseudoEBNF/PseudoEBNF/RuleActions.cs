@@ -12,27 +12,36 @@ namespace PseudoEBNF.PseudoEBNF
     {
         internal static ISemanticNode String(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var text = node.MatchedText.Trim();
+            var branch = (BranchParseNode)node.Unwrap();
+
+            var text = branch.Children[1].MatchedText;
             text = text
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
                 .Replace(@"\""", @"""");
+
             return new LeafSemanticNode((int)EbnfNodeType.String, text);
         }
 
         internal static ISemanticNode Regex(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var text = node.MatchedText.Trim();
+            var branch = (BranchParseNode)node.Unwrap();
+
+            var text = branch.Children[1].MatchedText;
             text = text
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
                 .Replace(@"\/", @"/");
+
             return new LeafSemanticNode((int)EbnfNodeType.Regex, text);
         }
 
         internal static ISemanticNode Identifier(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var text = node.MatchedText.Trim();
+            var branch = (BranchParseNode)node.Unwrap();
+
+            var text = branch.Children[1].MatchedText;
+
             return new LeafSemanticNode((int)EbnfNodeType.Identifier, text);
         }
 
@@ -43,11 +52,9 @@ namespace PseudoEBNF.PseudoEBNF
 
         internal static ISemanticNode Rule(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)Unwrap(node);
+            var branch = (BranchParseNode)node.Unwrap();
 
-            var ident = branch.Children[0].MatchedText.Trim();
-            var name = new LeafSemanticNode((int)EbnfNodeType.Identifier, ident);
-
+            var name = recurse(branch.Children[0].Unwrap());
             var expr = recurse(branch.Children[2].Unwrap());
 
             return new BranchSemanticNode((int)EbnfNodeType.Rule, new[] { name, expr });
@@ -57,9 +64,7 @@ namespace PseudoEBNF.PseudoEBNF
         {
             var branch = (BranchParseNode)node.Unwrap();
 
-            var ident = branch.Children[0].MatchedText.Trim();
-            var name = new LeafSemanticNode((int)EbnfNodeType.Identifier, ident);
-
+            var name = recurse(branch.Children[0].Unwrap());
             var expr = recurse(branch.Children[2].Unwrap());
 
             return new BranchSemanticNode((int)EbnfNodeType.Token, new[] { name, expr });
