@@ -43,7 +43,8 @@ namespace PseudoEBNF.Parsing
 
             grammar.DefineRule(RuleName.Implicit, new RepeatRule(
                 new OrRule(grammar.ImplicitNames
-                    .Select(GetRule))));
+                    .Select(GetRule)
+                    .Where(r => r != null))));
 
             grammar.AttachAction(RuleName.Implicit, (n, r) => null);
 
