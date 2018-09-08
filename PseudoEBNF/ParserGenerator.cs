@@ -114,7 +114,7 @@ namespace PseudoEBNF
             parser.AttachAction(RuleName.Root, RuleActions.Root);
         }
 
-        public Parser SpawnParser(string grammar, bool implicitWhitespace = true)
+        public Parser SpawnParser(Parser parser, string grammar, bool implicitWhitespace = true)
         {
             var result = new Parser();
 
@@ -161,6 +161,11 @@ namespace PseudoEBNF
             }
 
             return result;
+        }
+
+        public Parser SpawnParser(string grammar, bool implicitWhitespace = true)
+        {
+            return SpawnParser(parser, grammar, implicitWhitespace);
         }
 
         private IRule Interpret(Parser result, ISemanticNode node)

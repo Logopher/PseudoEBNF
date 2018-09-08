@@ -13,7 +13,7 @@ namespace Tests
         [TestMethod]
         public void ImplicitWhitespace()
         {
-            Lexer lexer = new Lexer();
+            var lexer = new Lexer();
             lexer.SetImplicit(RuleName.Whitespace);
 
             List<Lexeme> lexemes;
@@ -37,7 +37,7 @@ namespace Tests
         [TestMethod]
         public void ExplicitWhitespace()
         {
-            Lexer lexer = new Lexer();
+            var lexer = new Lexer();
 
             List<Lexeme> lexemes;
 

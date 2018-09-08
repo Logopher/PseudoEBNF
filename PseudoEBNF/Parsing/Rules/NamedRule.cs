@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using PseudoEBNF.Common;
@@ -32,13 +33,17 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
         {
+            Debug.WriteLine($"? {Name} {string.Join(" ", lexemes.Select(n => n.MatchedText))}");
+
             var match = Rule.Match(grammar, lexemes);
             if (match.Success)
             {
+                Debug.WriteLine($"+ {Name}");
                 return new Match<IParseNode>(new BranchParseNode(this, new[] { match.Result }), true);
             }
             else
             {
+                Debug.WriteLine($"- {Name}");
                 return new Match<IParseNode>(null, false);
             }
         }

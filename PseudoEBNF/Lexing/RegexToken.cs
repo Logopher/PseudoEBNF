@@ -22,7 +22,7 @@ namespace PseudoEBNF.Lexing
         }
 
         public RegexToken(string name, string pattern)
-            : this(Guid.NewGuid(), name, new Regex($"^{pattern}", RegexOptions.Compiled))
+            : this(Guid.NewGuid(), name, new Regex($@"\G{pattern}", RegexOptions.Compiled))
         {
         }
 
@@ -33,7 +33,7 @@ namespace PseudoEBNF.Lexing
 
         public Match<Lexeme> Match(string input, int index)
         {
-            var match = Regex.Match(input.Substring(index));
+            var match = Regex.Match(input, index);
             if (match.Success)
             {
                 return new Match<Lexeme>(new Lexeme(this, match.Groups[0].Value, index), true);
