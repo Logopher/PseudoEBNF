@@ -7,6 +7,7 @@ using System.Text;
 using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.Parsing.Rules
@@ -31,19 +32,22 @@ namespace PseudoEBNF.Parsing.Rules
             AttachAction(action);
         }
 
-        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
         {
-            Debug.WriteLine($"? {Name} {string.Join(" ", lexemes.Select(n => n.MatchedText))}");
+            super.ReportHypothesis(this);
+            //Debug.WriteLine($"? {Name} {string.Join(" ", lexemes.Select(n => n.MatchedText))}");
 
-            var match = Rule.Match(grammar, lexemes);
+            var match = Rule.Match(super, grammar, lexemes);
             if (match.Success)
             {
-                Debug.WriteLine($"+ {Name}");
+                super.ReportSuccess(this);
+                //Debug.WriteLine($"+ {Name}");
                 return new Match<IParseNode>(new BranchParseNode(this, new[] { match.Result }), true);
             }
             else
             {
-                Debug.WriteLine($"- {Name}");
+                super.ReportFailure(this);
+                //Debug.WriteLine($"- {Name}");
                 return new Match<IParseNode>(null, false);
             }
         }

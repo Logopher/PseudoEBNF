@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
@@ -35,14 +36,14 @@ namespace PseudoEBNF.Parsing.Rules
             return new AndRule(Children.Select(n => n.Clone()));
         }
 
-        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
         {
             var index = 0;
             var results = new List<IParseNode>();
 
             foreach (var rule in Children)
             {
-                var match = rule.Match(grammar, lexemes.GetRange(index, lexemes.Count - index));
+                var match = rule.Match(super, grammar, lexemes.GetRange(index, lexemes.Count - index));
                 if (match.Success)
                 {
                     if (match.Result != null)

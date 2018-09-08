@@ -1,11 +1,9 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Semantics;
-using System;
+using PseudoEBNF.Reporting;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -23,7 +21,7 @@ namespace PseudoEBNF.Parsing.Rules
             return new TokenRule(Token.Clone());
         }
 
-        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
         {
             var first = lexemes.FirstOrDefault();
             if (first?.Token.Guid == Token.Guid)

@@ -79,6 +79,11 @@ namespace PseudoEBNF.Common
 
         internal void SetImplicit(string name)
         {
+            if (IsLocked)
+            {
+                throw new Exception();
+            }
+
             implicitNames.Add(name);
         }
 
@@ -99,6 +104,11 @@ namespace PseudoEBNF.Common
 
         IRule DefineToken(string name, IToken token)
         {
+            if (IsLocked)
+            {
+                throw new Exception();
+            }
+
             tokens.Add(name, token);
 
             IRule rule = new TokenRule(token);

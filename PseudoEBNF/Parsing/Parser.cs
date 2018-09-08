@@ -2,6 +2,7 @@
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
+using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ namespace PseudoEBNF.Parsing
 {
     public class Parser
     {
+        readonly Supervisor super = new Supervisor();
         readonly Grammar grammar = new Grammar();
         public IReadOnlyList<string> ImplicitNames => grammar.ImplicitNames;
         
@@ -53,7 +55,7 @@ namespace PseudoEBNF.Parsing
             var lexer = new Lexer(grammar);
             var lexemes = lexer.Lex(input).ToList();
 
-            var match = grammar.RootRule.Match(grammar, lexemes);
+            var match = grammar.RootRule.Match(super, grammar, lexemes);
             var parseTree = match.Success ? match.Result : null;
 
             if (parseTree == null || parseTree.Length != input.Length)

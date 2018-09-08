@@ -1,16 +1,14 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Semantics;
-using System;
+using PseudoEBNF.Reporting;
 using System.Collections.Generic;
-using System.Text;
 
 namespace PseudoEBNF.Parsing.Rules
 {
     public interface IRule
     {
-        Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes);
+        Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes);
         IRule Clone();
     }
 }

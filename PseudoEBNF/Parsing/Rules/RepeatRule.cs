@@ -5,6 +5,7 @@ using System.Text;
 using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.Parsing.Rules
@@ -23,7 +24,7 @@ namespace PseudoEBNF.Parsing.Rules
             return new RepeatRule(rule.Clone());
         }
 
-        public Match<IParseNode> Match(Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
         {
             var index = 0;
             var list = lexemes.ToList();
@@ -31,7 +32,7 @@ namespace PseudoEBNF.Parsing.Rules
 
             while (index < lexemes.Count)
             {
-                var match = rule.Match(grammar, list.GetRange(index, list.Count - index));
+                var match = rule.Match(super, grammar, list.GetRange(index, list.Count - index));
                 if (match.Success)
                 {
                     results.Add(match.Result);
