@@ -43,7 +43,7 @@ namespace Tests
 
         internal static ISemanticNode Rule(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)Unwrap(node);
+            var branch = (BranchParseNode)node.Unwrap();
 
             var ident = branch.Children[0].MatchedText.Trim();
             var name = new LeafSemanticNode((int)EbnfNodeType.Identifier, ident);
@@ -107,33 +107,6 @@ namespace Tests
             var right = recurse(branch.Children[1].Unwrap());
 
             return new BranchSemanticNode((int)EbnfNodeType.And, left, right);
-        }
-
-        static IParseNode Unwrap(this IParseNode node)
-        {
-            if (node is BranchParseNode branch)
-            {
-                if (branch.Children.Count == 1)
-                {
-                    if (branch.Children[0] is BranchParseNode child)
-                    {
-                        if (child.Rule is NamedRule)
-                        {
-                            return child;
-                        }
-                        else
-                        {
-                            return Unwrap(child);
-                        }
-                    }
-                }
-                else
-                {
-                    return branch;
-                }
-            }
-
-            throw new Exception("LeafParseNode unprotected by NamedRule actions.");
         }
     }
 }

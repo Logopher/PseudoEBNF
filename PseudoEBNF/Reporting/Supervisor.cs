@@ -13,14 +13,16 @@ namespace PseudoEBNF.Reporting
 
         Node Head => stack.Peek();
 
+        int depth => stack.Count - 1;
+
         public Supervisor()
         {
             stack.Push(root);
         }
 
-        public void ReportHypothesis(NamedRule rule)
+        public void ReportHypothesis(NamedRule rule, int index)
         {
-            Debug.WriteLine($"? {rule.Name}");
+            WriteLine($"? {rule.Name}", index);
 
             var node = new Node();
             Head.Add(node);
@@ -29,18 +31,25 @@ namespace PseudoEBNF.Reporting
 
         public void ReportFailure(NamedRule rule)
         {
-            Debug.WriteLine($"- {rule.Name}");
+            WriteLine($"- {rule.Name}");
 
             Head.Success = false;
             stack.Pop();
         }
 
-        public void ReportSuccess(NamedRule rule)
+        public void ReportSuccess(NamedRule rule, string text)
         {
-            Debug.WriteLine($"+ {rule.Name}");
+            WriteLine($@"+ {rule.Name}
+{text}");
 
             Head.Success = true;
             stack.Pop();
+        }
+
+        void WriteLine(string text, int? index = null)
+        {
+            var indexStr = "\t" + (index?.ToString() ?? "");
+            Debug.WriteLine($"{depth}{indexStr}{new string('\t', depth % 40)}{text}");
         }
 
         class Node : IEnumerable<Node>

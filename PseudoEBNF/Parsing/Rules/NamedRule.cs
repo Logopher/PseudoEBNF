@@ -34,13 +34,13 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
         {
-            super.ReportHypothesis(this);
+            super.ReportHypothesis(this, lexemes.First().StartIndex);
             //Debug.WriteLine($"? {Name} {string.Join(" ", lexemes.Select(n => n.MatchedText))}");
 
             var match = Rule.Match(super, grammar, lexemes);
             if (match.Success)
             {
-                super.ReportSuccess(this);
+                super.ReportSuccess(this, match.Result.MatchedText);
                 //Debug.WriteLine($"+ {Name}");
                 return new Match<IParseNode>(new BranchParseNode(this, new[] { match.Result }), true);
             }
@@ -67,33 +67,46 @@ namespace PseudoEBNF.Parsing.Rules
 
         static ISemanticNode DefaultAction(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node;
-            var children = branch.Children
-                .Select(c =>
-                {
-                    if (c is LeafParseNode)
-                    {
-                        throw new Exception("DefaultAction cannot handle leaf nodes.");
-                    }
-                    else if (c.Rule is NamedRule)
-                    {
-                        return recurse(c);
-                    }
-                    else
-                    {
-                        return DefaultAction(c, recurse);
-                    }
-                })
-                .Where(c => c != null)
-                .ToList();
+            node = node.Unwrap();
 
-            if (children.Count == 1)
+            if(node.Rule is NamedRule)
             {
-                return children[0];
+                return recurse(node);
+            }
+
+            if (node is BranchParseNode branch)
+            {
+                var children = branch.Children
+                    .Select(c =>
+                    {
+                        if (c is LeafParseNode)
+                        {
+                            throw new Exception("DefaultAction cannot handle leaf nodes.");
+                        }
+                        else if (c.Rule is NamedRule)
+                        {
+                            return recurse(c);
+                        }
+                        else
+                        {
+                            return DefaultAction(c, recurse);
+                        }
+                    })
+                    .Where(c => c != null)
+                    .ToList();
+
+                if (children.Count == 1)
+                {
+                    return children[0];
+                }
+                else
+                {
+                    return new BranchSemanticNode(0, children);
+                }
             }
             else
             {
-                return new BranchSemanticNode(0, children);
+                throw new Exception();
             }
         }
     }

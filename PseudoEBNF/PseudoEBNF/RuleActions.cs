@@ -1,10 +1,8 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Semantics;
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace PseudoEBNF.PseudoEBNF
 {
@@ -12,9 +10,7 @@ namespace PseudoEBNF.PseudoEBNF
     {
         internal static ISemanticNode String(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var text = branch.Children[1].MatchedText;
+            var text = node.Unwrap().MatchedText;
             text = text
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
@@ -25,9 +21,7 @@ namespace PseudoEBNF.PseudoEBNF
 
         internal static ISemanticNode Regex(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var text = branch.Children[1].MatchedText;
+            var text = node.Unwrap().MatchedText;
             text = text
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
@@ -38,9 +32,7 @@ namespace PseudoEBNF.PseudoEBNF
 
         internal static ISemanticNode Identifier(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var text = branch.Children[1].MatchedText;
+            var text = node.Unwrap().MatchedText;
 
             return new LeafSemanticNode((int)EbnfNodeType.Identifier, text);
         }
@@ -52,76 +44,69 @@ namespace PseudoEBNF.PseudoEBNF
 
         internal static ISemanticNode Rule(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var name = recurse(branch.Children[0].Unwrap());
-            var expr = recurse(branch.Children[2].Unwrap());
+            var name = recurse(node.GetDescendant(0));
+            var expr = recurse(node.GetDescendant(2));
 
             return new BranchSemanticNode((int)EbnfNodeType.Rule, new[] { name, expr });
         }
 
         internal static ISemanticNode Token(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var name = recurse(branch.Children[0].Unwrap());
-            var expr = recurse(branch.Children[2].Unwrap());
+            var name = recurse(node.GetDescendant(0));
+            var expr = recurse(node.GetDescendant(2));
 
             return new BranchSemanticNode((int)EbnfNodeType.Token, new[] { name, expr });
         }
 
         internal static ISemanticNode Repeat(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Repeat, recurse(branch.Children[1].Unwrap()));
+            var repeat = recurse(node.GetDescendant(1));
+
+            return new BranchSemanticNode((int)EbnfNodeType.Repeat, repeat);
         }
 
         internal static ISemanticNode Optional(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Optional, recurse(branch.Children[1].Unwrap()));
+            var opt = recurse(node.GetDescendant(1));
+
+            return new BranchSemanticNode((int)EbnfNodeType.Optional, opt);
         }
 
         internal static ISemanticNode Not(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Not, recurse(branch.Children[1].Unwrap()));
+            var not = recurse(node.GetDescendant(1));
+
+            return new BranchSemanticNode((int)EbnfNodeType.Not, not);
         }
 
         internal static ISemanticNode Group(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Group, recurse(branch.Children[1].Unwrap()));
+            var group = recurse(node.GetDescendant(1));
+
+            return new BranchSemanticNode((int)EbnfNodeType.Group, group);
         }
 
         internal static ISemanticNode Or(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var left = recurse(branch.Children[0].Unwrap());
-            var right = recurse(branch.Children[2].Unwrap());
+            var left = recurse(node.GetDescendant(0));
+            var right = recurse(node.GetDescendant(2));
 
             return new BranchSemanticNode((int)EbnfNodeType.Or, left, right);
         }
 
         internal static ISemanticNode And(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var left = recurse(branch.Children[0].Unwrap());
-            var right = recurse(branch.Children[1].Unwrap());
+            var left = recurse(node.GetDescendant(0));
+            var right = recurse(node.GetDescendant(1));
 
             return new BranchSemanticNode((int)EbnfNodeType.And, left, right);
         }
 
         internal static ISemanticNode Root(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-
-            var children = ((BranchParseNode)branch.Children[0].Unwrap())
-                .Children
-                .Select(Unwrap)
-                .Select(recurse);
+            var children = ((BranchParseNode)node.GetDescendant(0))
+                .Children.Select(n => recurse(n.Unwrap()))
+                .ToList();
 
             return new BranchSemanticNode((int)EbnfNodeType.Root, children);
         }
@@ -129,33 +114,6 @@ namespace PseudoEBNF.PseudoEBNF
         internal static ISemanticNode LineComment(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
         {
             return null;
-        }
-
-        static IParseNode Unwrap(this IParseNode node)
-        {
-            if (node is BranchParseNode branch)
-            {
-                if (branch.Children.Count == 1)
-                {
-                    if (branch.Children[0] is BranchParseNode child)
-                    {
-                        if (child.Rule is NamedRule)
-                        {
-                            return child;
-                        }
-                        else
-                        {
-                            return Unwrap(child);
-                        }
-                    }
-                }
-                else
-                {
-                    return branch;
-                }
-            }
-
-            throw new Exception("LeafParseNode unprotected by NamedRule actions.");
         }
     }
 }

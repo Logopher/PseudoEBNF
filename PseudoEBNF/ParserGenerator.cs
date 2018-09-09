@@ -46,15 +46,15 @@ namespace PseudoEBNF
 
             parser.DefineRule(RuleName.Not,
                 new NameRule(RuleName.ExclamationPoint)
-                    .And(new NameRule(RuleName.Expression)));
+                    .And(new NameRule(RuleName.SimpleExpression)));
 
             parser.DefineRule(RuleName.Optional,
                 new NameRule(RuleName.QuestionMark)
-                    .And(new NameRule(RuleName.Expression)));
+                    .And(new NameRule(RuleName.SimpleExpression)));
 
             parser.DefineRule(RuleName.Repeat,
                 new NameRule(RuleName.Asterisk)
-                    .And(new NameRule(RuleName.Expression)));
+                    .And(new NameRule(RuleName.SimpleExpression)));
 
             parser.DefineRule(RuleName.Group,
                 new NameRule(RuleName.LeftParenthesis)
@@ -114,13 +114,13 @@ namespace PseudoEBNF
             parser.AttachAction(RuleName.Root, RuleActions.Root);
         }
 
-        public Parser SpawnParser(Parser parser, string grammar, bool implicitWhitespace = true)
+        public Parser SpawnParser(Parser parser, string grammar, params string[] implicitNames)
         {
             var result = new Parser();
 
-            if (implicitWhitespace)
+            foreach(var name in implicitNames)
             {
-                result.SetImplicit(RuleName.Whitespace);
+                result.SetImplicit(name);
             }
 
             var semantics = parser.Parse(grammar);
@@ -163,9 +163,9 @@ namespace PseudoEBNF
             return result;
         }
 
-        public Parser SpawnParser(string grammar, bool implicitWhitespace = true)
+        public Parser SpawnParser(string grammar, params string[] implicitNames)
         {
-            return SpawnParser(parser, grammar, implicitWhitespace);
+            return SpawnParser(parser, grammar, implicitNames);
         }
 
         private IRule Interpret(Parser result, ISemanticNode node)

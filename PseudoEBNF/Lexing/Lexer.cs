@@ -62,7 +62,7 @@ namespace PseudoEBNF.Lexing
                         var lexeme = match.Result;
                         index += lexeme.Length;
                         yield return lexeme;
-                        continue;
+                        break;
                     }
                 }
 

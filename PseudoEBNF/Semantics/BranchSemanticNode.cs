@@ -24,5 +24,10 @@ namespace PseudoEBNF.Semantics
             : this(nodeType, new[] { first }.Concat(rest))
         {
         }
+
+        public BranchSemanticNode(int nodeType, ISemanticNode first, IEnumerable<ISemanticNode> rest)
+            : this(nodeType, new[] { first }.Concat(rest))
+        {
+        }
     }
 }

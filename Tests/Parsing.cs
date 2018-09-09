@@ -25,7 +25,7 @@ namespace Tests
         [TestMethod]
         public void ImplicitWhitespace()
         {
-            var parser = parserGen.SpawnParser($@"
+            var grammar = $@"
 {RuleName.Equals} = ""="";
 {RuleName.Pipe} = ""|"";
 {RuleName.Asterisk} = ""*"";
@@ -55,7 +55,8 @@ namespace Tests
 {RuleName.Assignment} = {RuleName.Token} {RuleName.Pipe} {RuleName.Rule};
 //{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 {RuleName.Root} = {RuleName.Identifier} ?({RuleName.Identifier} {RuleName.Identifier});
-");
+";
+            var parser = parserGen.SpawnParser(grammar, RuleName.Whitespace, RuleName.LineComment);
 
             IParseNode node;
 
@@ -70,8 +71,8 @@ namespace Tests
         public void Ebnf()
         {
             var parserGen = new ParserGenerator();
-            
-            var parser = parserGen.SpawnParser($@"
+
+            var grammar = $@"
 {RuleName.Equals} = ""="";
 {RuleName.Pipe} = ""|"";
 {RuleName.Asterisk} = ""*"";
@@ -101,109 +102,21 @@ namespace Tests
 {RuleName.Assignment} = {RuleName.Token} {RuleName.Pipe} {RuleName.Rule};
 //{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 {RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
-");
+";
+
+            var parser = parserGen.SpawnParser(grammar, RuleName.Whitespace, RuleName.LineComment);
 
             parser.ToString();
         }
 
-        Parser GetJsParser()
+        [TestMethod]
+        public void JavaScript()
         {
-            var parser = GetEbnfParser();
-            return null;
-        }
+            var parser = new PseudoEBNF.JavaScript.Parser();
 
-        Parser GetEbnfParser()
-        {
-            var parser = new Parser();
-
-            parser.SetImplicit(RuleName.Whitespace);
-
-            parser.DefineString(RuleName.Equals, @"=");
-            parser.DefineString(RuleName.Pipe, @"|");
-            parser.DefineString(RuleName.Asterisk, @"*");
-            parser.DefineString(RuleName.QuestionMark, @"?");
-            parser.DefineString(RuleName.ExclamationPoint, @"!");
-            parser.DefineString(RuleName.Semicolon, @";");
-            parser.DefineString(RuleName.LeftParenthesis, @"(");
-            parser.DefineString(RuleName.RightParenthesis, @")");
-
-            parser.DefineRegex(RuleName.Whitespace, @"\s+");
-            parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
-            parser.DefineRegex(RuleName.String, @"""(\\[^""]|\\""|[^""])*""");
-            parser.DefineRegex(RuleName.Regex, @"/(\\[^/]|\\/|[^/])*/");
-
-            parser.DefineRule(RuleName.And,
-                new NameRule(RuleName.SimpleExpression)
-                    .And(new NameRule(RuleName.Expression)));
-
-            parser.DefineRule(RuleName.Or,
-                new NameRule(RuleName.SimpleExpression)
-                    .And(new NameRule(RuleName.Pipe),
-                        new NameRule(RuleName.Expression)));
-
-            parser.DefineRule(RuleName.Not,
-                new NameRule(RuleName.ExclamationPoint)
-                    .And(new NameRule(RuleName.Expression)));
-
-            parser.DefineRule(RuleName.Optional,
-                new NameRule(RuleName.QuestionMark)
-                    .And(new NameRule(RuleName.Expression)));
-
-            parser.DefineRule(RuleName.Repeat,
-                new NameRule(RuleName.Asterisk)
-                    .And(new NameRule(RuleName.Expression)));
-
-            parser.DefineRule(RuleName.Group,
-                new NameRule(RuleName.LeftParenthesis)
-                    .And(new NameRule(RuleName.Expression),
-                        new NameRule(RuleName.RightParenthesis)));
-
-            parser.DefineRule(RuleName.Literal,
-                new NameRule(RuleName.String)
-                    .Or(new NameRule(RuleName.Regex)));
-
-            parser.DefineRule(RuleName.SimpleExpression,
-                new NameRule(RuleName.Optional)
-                    .Or(new NameRule(RuleName.Repeat),
-                        new NameRule(RuleName.Not),
-                        new NameRule(RuleName.Group),
-                        new NameRule(RuleName.Identifier)));
-
-            parser.DefineRule(RuleName.Expression,
-                new NameRule(RuleName.Or)
-                    .Or(new NameRule(RuleName.And),
-                        new NameRule(RuleName.SimpleExpression)));
-
-            parser.DefineRule(RuleName.Token,
-                new NameRule(RuleName.Identifier)
-                    .And(new NameRule(RuleName.Equals),
-                        new NameRule(RuleName.Literal),
-                        new NameRule(RuleName.Semicolon)));
-
-            parser.DefineRule(RuleName.Rule,
-                new NameRule(RuleName.Identifier)
-                    .And(new NameRule(RuleName.Equals),
-                        new NameRule(RuleName.Expression),
-                        new NameRule(RuleName.Semicolon)));
-
-            parser.AttachAction(RuleName.Whitespace, RuleActions.Whitespace);
-
-            parser.AttachAction(RuleName.String, RuleActions.String);
-            parser.AttachAction(RuleName.Regex, RuleActions.Regex);
-            parser.AttachAction(RuleName.Identifier, RuleActions.Identifier);
-
-            parser.AttachAction(RuleName.Repeat, RuleActions.Repeat);
-            parser.AttachAction(RuleName.Optional, RuleActions.Optional);
-            parser.AttachAction(RuleName.Not, RuleActions.Not);
-            parser.AttachAction(RuleName.Group, RuleActions.Group);
-
-            parser.AttachAction(RuleName.And, RuleActions.And);
-            parser.AttachAction(RuleName.Or, RuleActions.Or);
-
-            parser.AttachAction(RuleName.Token, RuleActions.Token);
-            parser.AttachAction(RuleName.Rule, RuleActions.Rule);
-
-            return parser;
+            var tree = parser.Parse(@"
+document.getElementById('demo').innerHTML = Date()
+");
         }
     }
 }
