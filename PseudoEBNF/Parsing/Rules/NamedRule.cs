@@ -34,7 +34,7 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
         {
-            super.ReportHypothesis(this, lexemes.First().StartIndex);
+            super.ReportHypothesis(this, lexemes.FirstOrDefault()?.StartIndex);
             //Debug.WriteLine($"? {Name} {string.Join(" ", lexemes.Select(n => n.MatchedText))}");
 
             var match = Rule.Match(super, grammar, lexemes);
@@ -79,6 +79,8 @@ namespace PseudoEBNF.Parsing.Rules
                 var children = branch.Children
                     .Select(c =>
                     {
+                        c = c.Unwrap();
+
                         if (c is LeafParseNode)
                         {
                             throw new Exception("DefaultAction cannot handle leaf nodes.");

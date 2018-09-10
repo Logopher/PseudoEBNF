@@ -2,6 +2,8 @@
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Semantics;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PseudoEBNF.JavaScript
@@ -84,14 +86,24 @@ object = leftBracket ?(propertyDef *(comma propertyDef)) rightBracket;
 dotRef = dot ident;
 key = leftSquare expr rightSquare;
 argList = leftParen ?(expr *(comma expr)) rightParen;
-compositeExpression = simpleExpr *(dotRef | key | argList);
+expressionFragment = dotRef | key | argList;
 
-variableDecl = (varKeyword | letKeyword) identAssignment *(comma identAssignment) ?semicolon;
+dotRefExpression = (expressionFragment dotRefExpression) | dotRef;
+keyExpression = (expressionFragment keyExpression) | key;
+argListExpression = (expressionFragment argListExpression) | argList;
+
+compositeExpression = simpleExpr (dotRefExpression | keyExpression | argListExpression);
+
+localAssignment = ident equals expr;
+propertyAssignment = simpleExpr (dotRefExpression | keyExpression) equals expr;
+assignment = localAssignment | propertyAssignment;
+
+variable = localAssignment | ident;
+variableDecl = (varKeyword | letKeyword) variable *(comma variable) ?semicolon;
 
 simpleExpr = anonFunction | ident | number | string | paren | unaryMath | logicNegation | bitNegation | object;
-expr = math | logic | bitwise | compositeExpression;
-assignment = compositeExpression equals expr *(equals expr);
-statement = namedFunction | block | semicolon | variableDecl | (assignment ?semicolon) | (expr ?semicolon);
+expr = math | logic | bitwise | assignment | compositeExpression | simpleExpr;
+statement = namedFunction | block | semicolon | variableDecl | (expr ?semicolon);
 
 root = statement *statement;
 ";
@@ -103,7 +115,7 @@ root = statement *statement;
             parser.SetImplicit("blockComment");
             parser.SetImplicit("lineComment");
 
-            /*
+            //*
             parser.AttachAction("root", (node, recurse) =>
             {
                 var first = recurse(node.GetDescendant(0));
@@ -115,56 +127,64 @@ root = statement *statement;
 
             parser.AttachAction("statement", (node, recurse) =>
             {
-                if (!(node.Rule is NamedRule)) // expr
-                {
-                    node = node.GetDescendant(0);
-                }
-
-                var stmt = recurse(node);
+                var stmt = recurse(node.GetDescendant(0));
 
                 return new BranchSemanticNode((int)JsNodeType.Statement, stmt);
             });
 
             parser.AttachAction("variableDecl", (node, recurse) =>
             {
-                var first = recurse(node.GetDescendant(1));
+                var first = recurse(node.GetDescendant(1, 0));
                 var rest = ((BranchParseNode)node.GetDescendant(2))
-                    .Children.Select(n => recurse(n.GetDescendant(1)));
+                    .Children.Select(n => recurse(n.GetDescendant(1, 0)));
 
                 return new BranchSemanticNode((int)JsNodeType.Variable, first, rest);
             });
 
-            parser.AttachAction("assignment", (node, recurse) =>
+            parser.AttachAction("localAssignment", (node, recurse) =>
             {
                 var lvalue = recurse(node.GetDescendant(0));
-                var expr = recurse(node.GetDescendant(1, 1));
+                var expr = recurse(node.GetDescendant(2));
 
                 return new BranchSemanticNode((int)JsNodeType.Assignment, lvalue, expr);
             });
 
-            parser.AttachAction("functionCall", (node, recurse) =>
+            parser.AttachAction("propertyAssignment", (node, recurse) =>
             {
-                var name = recurse(node.GetDescendant(0));
-                var args = recurse(node.GetDescendant(2));
+                var first = recurse(node.GetDescendant(0));
 
-                return new BranchSemanticNode((int)JsNodeType.FunctionCall, name, args);
+                var fragments = node.GetDescendant(1);
+
+                var temp = ExpressionFragments(fragments, recurse);
+                var nodeType = temp.Item1;
+                var rest = temp.Item2;
+
+                var lvalue = new BranchSemanticNode((int)nodeType, first, rest);
+                var expr = recurse(node.GetDescendant(3));
+
+                return new BranchSemanticNode((int)JsNodeType.Assignment, lvalue, expr);
+            });
+
+            parser.AttachAction("compositeExpression", (node, recurse) =>
+            {
+                var first = recurse(node.GetDescendant(0));
+
+                var fragments = node.GetDescendant(1);
+
+                var temp = ExpressionFragments(fragments, recurse);
+                var nodeType = temp.Item1;
+                var rest = temp.Item2;
+
+                return new BranchSemanticNode((int)nodeType, first, rest);
             });
 
             parser.AttachAction("argList", (node, recurse) =>
             {
-                var first = recurse(node.GetDescendant(0));
-                var rest = ((BranchParseNode)node.GetDescendant(1))
+                var first = recurse(node.GetDescendant(1, 0));
+                var rest = ((BranchParseNode)node.GetDescendant(1, 1))
                     .Children.Select(n => recurse(n.GetDescendant(1)));
 
                 return new BranchSemanticNode((int)JsNodeType.ArgumentList, first, rest);
-            });
-
-            parser.AttachAction("property", (node, recurse) =>
-            {
-                var obj = recurse(node.GetDescendant(0));
-                var ident = recurse(node.GetDescendant(1, 1));
-
-                return new BranchSemanticNode((int)JsNodeType.Property, obj, ident);
             });
 
             parser.AttachAction("object", (node, recurse) =>
@@ -306,6 +326,75 @@ root = statement *statement;
                 return new LeafSemanticNode((int)JsNodeType.Number, number);
             });
             //*/
+        }
+
+        Tuple<JsNodeType, List<ISemanticNode>> ExpressionFragments(IParseNode fragments, Func<IParseNode, ISemanticNode> recurse)
+        {
+            JsNodeType nodeType;
+            var semanticNodes = new List<ISemanticNode>();
+            var named = (NamedRule)fragments.Rule;
+            switch (named.Name)
+            {
+                case "dotRef":
+                case "key":
+                    semanticNodes.Add(recurse(fragments.GetDescendant(1)));
+                    nodeType = JsNodeType.Property;
+                    break;
+                case "argList":
+                    var all = (BranchParseNode)fragments.GetDescendant(1);
+                    if (all.Children.Count != 0)
+                    {
+                        var first = recurse(all.GetDescendant(0));
+                        var rest = ((BranchParseNode)all.GetDescendant(1))
+                            .Children.Select(n => recurse(n.GetDescendant(1)));
+
+                        semanticNodes.Add(first);
+                        semanticNodes.AddRange(rest);
+                    }
+
+                    nodeType = JsNodeType.FunctionCall;
+                    break;
+                default:
+                    {
+                        var fragmentBranch = (BranchParseNode)((BranchParseNode)fragments).Children[0];
+
+                        if (fragmentBranch.Children.Count == 1)
+                        {
+                            return ExpressionFragments(fragmentBranch.Children[0], recurse);
+                        }
+
+                        var argsNode = fragmentBranch.GetDescendant(0, 0);
+
+                        var first = fragmentBranch.GetDescendant(0);
+
+                        var temp = ExpressionFragments(fragmentBranch.GetDescendant(1), recurse);
+                        var rest = temp.Item2;
+
+                        semanticNodes.Add(recurse(first.GetDescendant(0, 1)));
+                        semanticNodes.AddRange(rest);
+
+                        var rule = (NamedRule)fragments.Rule;
+                        switch (rule.Name)
+                        {
+                            case "dotRefExpression":
+                            case "keyExpression":
+                                nodeType = JsNodeType.Property;
+                                break;
+                            case "argListExpression":
+                                nodeType = JsNodeType.FunctionCall;
+                                break;
+                            default:
+                                throw new Exception();
+                        }
+
+                        var result = new BranchSemanticNode((int)temp.Item1, semanticNodes);
+                        semanticNodes.Clear();
+                        semanticNodes.Add(result);
+                        break;
+                    }
+            }
+
+            return Tuple.Create(nodeType, semanticNodes);
         }
 
         public ISemanticNode Parse(string input)

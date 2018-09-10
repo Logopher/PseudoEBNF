@@ -106,7 +106,12 @@ namespace PseudoEBNF.Common
             {
                 if(node is BranchParseNode branch && index < branch.Children.Count)
                 {
-                    node = branch.Children[index].Unwrap();
+                    node = branch.Children[index];
+
+                    if(node.Rule is NameRule)
+                    {
+                        node = ((BranchParseNode)node).Children[0];
+                    }
                 }
                 else
                 {
