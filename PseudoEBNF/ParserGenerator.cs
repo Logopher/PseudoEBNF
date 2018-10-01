@@ -1,5 +1,4 @@
 ﻿using PseudoEBNF.Common;
-using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.PseudoEBNF;
@@ -112,13 +111,17 @@ namespace PseudoEBNF
             parser.AttachAction(RuleName.LineComment, RuleActions.LineComment);
 
             parser.AttachAction(RuleName.Root, RuleActions.Root);
+
+            parser.AttachAction(RuleName.Literal, RuleActions.Unwrap);
+            parser.AttachAction(RuleName.Expression, RuleActions.Unwrap);
+            parser.AttachAction(RuleName.SimpleExpression, RuleActions.Unwrap);
         }
 
         public Parser SpawnParser(Parser parser, string grammar, params string[] implicitNames)
         {
             var result = new Parser();
 
-            foreach(var name in implicitNames)
+            foreach (var name in implicitNames)
             {
                 result.SetImplicit(name);
             }
@@ -143,6 +146,9 @@ namespace PseudoEBNF
                 {
                     switch ((EbnfNodeType)leaf.NodeType)
                     {
+                        case EbnfNodeType.Identifier:
+                            result.DefineRule(name, new NameRule(leaf.Value));
+                            break;
                         case EbnfNodeType.String:
                             result.DefineString(name, leaf.Value);
                             break;
@@ -196,6 +202,10 @@ namespace PseudoEBNF
                         rule = new OrRule(branch.Children.Select(child => Interpret(result, child)));
                         break;
 
+                    case EbnfNodeType.None:
+                        rule = Interpret(result, branch.Children.Single());
+                        break;
+
                     case EbnfNodeType.Root:
                     case EbnfNodeType.Rule:
                     case EbnfNodeType.Token:
@@ -211,12 +221,16 @@ namespace PseudoEBNF
                         rule = new NameRule(leaf.Value);
                         break;
 
+                    case EbnfNodeType.String:
+                    case EbnfNodeType.Regex:
+                        break;
+
                     default:
                         throw new Exception();
                 }
             }
 
-            if(rule == null)
+            if (rule == null)
             {
                 throw new Exception();
             }

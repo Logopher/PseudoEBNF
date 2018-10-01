@@ -10,9 +10,9 @@ namespace Tests
 {
     public static class RuleActions
     {
-        internal static ISemanticNode String(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode String(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var text = node.MatchedText.Trim();
+            var text = branch.Leaf.MatchedText;
             text = text
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
@@ -20,9 +20,9 @@ namespace Tests
             return new LeafSemanticNode((int)EbnfNodeType.String, text);
         }
 
-        internal static ISemanticNode Regex(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Regex(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var text = node.MatchedText.Trim();
+            var text = branch.Leaf.MatchedText;
             text = text
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
@@ -30,81 +30,81 @@ namespace Tests
             return new LeafSemanticNode((int)EbnfNodeType.Regex, text);
         }
 
-        internal static ISemanticNode Identifier(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Identifier(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var text = node.MatchedText.Trim();
+            var text = branch.Leaf.MatchedText;
             return new LeafSemanticNode((int)EbnfNodeType.Identifier, text);
         }
 
-        internal static ISemanticNode Whitespace(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Whitespace(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
             return null;
         }
 
-        internal static ISemanticNode Rule(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Rule(BranchParseNode branch, Func<IParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
+            branch = branch.Unwrap();
 
-            var ident = branch.Children[0].MatchedText.Trim();
+            var ident = branch.Branches[0].MatchedText.Trim();
             var name = new LeafSemanticNode((int)EbnfNodeType.Identifier, ident);
 
-            var expr = recurse(branch.Children[2].Unwrap());
+            var expr = recurse(branch.Branches[2].Unwrap());
 
             return new BranchSemanticNode((int)EbnfNodeType.Rule, new[] { name, expr });
         }
 
-        internal static ISemanticNode Token(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Token(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
+            branch = branch.Unwrap();
 
-            var ident = branch.Children[0].MatchedText.Trim();
+            var ident = branch.Branches[0].MatchedText.Trim();
             var name = new LeafSemanticNode((int)EbnfNodeType.Identifier, ident);
 
-            var expr = recurse(branch.Children[2].Unwrap());
+            var expr = recurse(branch.Branches[2].Unwrap());
 
             return new BranchSemanticNode((int)EbnfNodeType.Token, new[] { name, expr });
         }
 
-        internal static ISemanticNode Repeat(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Repeat(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Repeat, recurse(branch.Children[1].Unwrap()));
+            branch = branch.Unwrap();
+            return new BranchSemanticNode((int)EbnfNodeType.Repeat, recurse(branch.Branches[1].Unwrap()));
         }
 
-        internal static ISemanticNode Optional(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Optional(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Optional, recurse(branch.Children[1].Unwrap()));
+            branch = branch.Unwrap();
+            return new BranchSemanticNode((int)EbnfNodeType.Optional, recurse(branch.Branches[1].Unwrap()));
         }
 
-        internal static ISemanticNode Not(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Not(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Not, recurse(branch.Children[1].Unwrap()));
+            branch = branch.Unwrap();
+            return new BranchSemanticNode((int)EbnfNodeType.Not, recurse(branch.Branches[1].Unwrap()));
         }
 
-        internal static ISemanticNode Group(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Group(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
-            return new BranchSemanticNode((int)EbnfNodeType.Group, recurse(branch.Children[1].Unwrap()));
+            branch = branch.Unwrap();
+            return new BranchSemanticNode((int)EbnfNodeType.Group, recurse(branch.Branches[1].Unwrap()));
         }
 
-        internal static ISemanticNode Or(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode Or(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
+            branch = branch.Unwrap();
 
-            var left = recurse(branch.Children[0].Unwrap());
-            var right = recurse(branch.Children[2].Unwrap());
+            var left = recurse(branch.Branches[0].Unwrap());
+            var right = recurse(branch.Branches[2].Unwrap());
 
             return new BranchSemanticNode((int)EbnfNodeType.Or, left, right);
         }
 
-        internal static ISemanticNode And(IParseNode node, Func<IParseNode, ISemanticNode> recurse)
+        internal static ISemanticNode And(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var branch = (BranchParseNode)node.Unwrap();
+            branch = branch.Unwrap();
 
-            var left = recurse(branch.Children[0].Unwrap());
-            var right = recurse(branch.Children[1].Unwrap());
+            var left = recurse(branch.Branches[0].Unwrap());
+            var right = recurse(branch.Branches[1].Unwrap());
 
             return new BranchSemanticNode((int)EbnfNodeType.And, left, right);
         }

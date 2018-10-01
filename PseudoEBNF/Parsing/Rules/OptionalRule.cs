@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using PseudoEBNF.Common;
+﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Reporting;
-using PseudoEBNF.Semantics;
+using System.Collections.Generic;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -25,15 +22,11 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
         {
+
             var match = rule.Match(super, grammar, lexemes);
-            if(match.Success)
-            {
-                return new Match<IParseNode>(match.Result, true);
-            }
-            else
-            {
-                return new Match<IParseNode>(null, true);
-            }
+            var results = match.Success ? new[] { match.Result } : new IParseNode[0];
+
+            return new Match<IParseNode>(new BranchParseNode(this, results), true);
         }
     }
 }

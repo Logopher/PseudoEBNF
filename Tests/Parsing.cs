@@ -1,10 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PseudoEBNF.Lexing;
 using PseudoEBNF;
 using PseudoEBNF.Common;
-using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing;
+using PseudoEBNF.Semantics;
 
 namespace Tests
 {
@@ -57,6 +55,16 @@ namespace Tests
 {RuleName.Root} = {RuleName.Identifier} ?({RuleName.Identifier} {RuleName.Identifier});
 ";
             var parser = parserGen.SpawnParser(grammar, RuleName.Whitespace, RuleName.LineComment);
+
+            parser.AttachAction(RuleName.Identifier, (branch, recurse) =>
+            {
+                return new LeafSemanticNode((int)EbnfNodeType.Identifier, branch.Leaf.MatchedText);
+            });
+
+            parser.AttachAction(RuleName.Literal, (branch, recurse) =>
+            {
+                return new BranchSemanticNode(0, recurse(branch));
+            });
 
             IParseNode node;
 

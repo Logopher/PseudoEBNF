@@ -39,7 +39,7 @@ namespace PseudoEBNF.Parsing
             return semanticTree;
         }
 
-        public IParseNode ParseSyntax(string input)
+        public BranchParseNode ParseSyntax(string input)
         {
             var grammar = this.grammar.Clone();
 
@@ -56,7 +56,7 @@ namespace PseudoEBNF.Parsing
             var lexemes = lexer.Lex(input).ToList();
 
             var match = grammar.RootRule.Match(super, grammar, lexemes);
-            var parseTree = match.Success ? match.Result : null;
+            var parseTree = match.Success ? (BranchParseNode)match.Result : null;
 
             if (parseTree == null || parseTree.Length != input.Length)
             {
@@ -66,7 +66,7 @@ namespace PseudoEBNF.Parsing
             return parseTree;
         }
 
-        ISemanticNode ParseSemantics(IParseNode node)
+        ISemanticNode ParseSemantics(BranchParseNode node)
         {
             if (node.Rule is NamedRule named)
             {
@@ -78,7 +78,7 @@ namespace PseudoEBNF.Parsing
             }
         }
 
-        public void AttachAction(string name, Func<IParseNode, Func<IParseNode, ISemanticNode>, ISemanticNode> action)
+        public void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
         {
             grammar.AttachAction(name, action);
         }

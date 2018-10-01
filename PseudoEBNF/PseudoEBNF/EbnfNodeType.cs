@@ -23,5 +23,6 @@ namespace PseudoEBNF.PseudoEBNF
         Rule,
 
         Root,
+        None,
     }
 }

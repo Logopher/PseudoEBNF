@@ -87,7 +87,7 @@ namespace PseudoEBNF.Common
             implicitNames.Add(name);
         }
 
-        internal void AttachAction(string name, Func<IParseNode, Func<IParseNode, ISemanticNode>, ISemanticNode> action)
+        internal void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
         {
             GetRule(name).AttachAction(action);
         }
