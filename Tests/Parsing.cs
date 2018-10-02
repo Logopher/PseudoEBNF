@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PseudoEBNF;
 using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Semantics;
 
@@ -124,6 +125,10 @@ namespace Tests
 
             var tree = parser.Parse(@"
 document.getElementById('demo').innerHTML = Date()
+");
+
+            tree = parser.Parse(@"
+document.getElementById('demo').innerHTML = new Date()
 ");
         }
     }

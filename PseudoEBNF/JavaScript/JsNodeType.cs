@@ -31,5 +31,8 @@ namespace PseudoEBNF.JavaScript
         RegularExpression,
         Number,
         String,
+        DotReference,
+        KeyReference,
+        Constructor,
     }
 }

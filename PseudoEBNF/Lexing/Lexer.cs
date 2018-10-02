@@ -24,14 +24,14 @@ namespace PseudoEBNF.Lexing
             grammar.SetImplicit(name);
         }
 
-        public void DefineRegex(string name, string pattern)
+        public RegexToken DefineRegex(string name, string pattern)
         {
-            grammar.DefineRegex(name, pattern);
+            return grammar.DefineRegex(name, pattern);
         }
 
-        public void DefineString(string name, string text)
+        public StringToken DefineString(string name, string text)
         {
-            grammar.DefineString(name, text);
+            return grammar.DefineString(name, text);
         }
 
         public IEnumerable<Lexeme> Lex(string input)

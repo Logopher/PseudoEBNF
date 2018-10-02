@@ -48,6 +48,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="LexemeList.cs" />
     <Compile Include="Lexing.cs" />
     <Compile Include="EbnfNodeType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

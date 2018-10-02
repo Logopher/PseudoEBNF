@@ -88,12 +88,12 @@ namespace PseudoEBNF.Parsing
             grammar.SetImplicit(name);
         }
 
-        public IRule DefineString(string name, string value)
+        public StringToken DefineString(string name, string value)
         {
             return grammar.DefineString(name, value);
         }
 
-        public IRule DefineRegex(string name, string value)
+        public RegexToken DefineRegex(string name, string value)
         {
             return grammar.DefineRegex(name, value);
         }

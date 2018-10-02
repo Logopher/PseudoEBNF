@@ -1,12 +1,11 @@
 ﻿using PseudoEBNF.Common;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PseudoEBNF.Lexing
 {
-    public class RegexToken : IToken
+    public class RegexToken : IToken, IEquatable<RegexToken>
     {
         public Guid Guid { get; }
 
@@ -42,6 +41,42 @@ namespace PseudoEBNF.Lexing
             {
                 return new Match<Lexeme>(null, false);
             }
+        }
+
+        public bool Equals(RegexToken other)
+        {
+            return Guid == other.Guid;
+        }
+
+        public bool Equals(IToken other)
+        {
+            if(!(other is RegexToken regTok))
+            { return false; }
+
+            return Equals(regTok);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is RegexToken regTok))
+            { return false; }
+
+            return Equals(regTok);
+        }
+
+        public override int GetHashCode()
+        {
+            return -737073652 + Guid.GetHashCode();
+        }
+
+        public static bool operator ==(RegexToken a, RegexToken b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(RegexToken a, RegexToken b)
+        {
+            return !(a == b);
         }
     }
 }

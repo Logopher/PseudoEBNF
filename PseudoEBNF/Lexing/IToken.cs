@@ -3,7 +3,7 @@ using System;
 
 namespace PseudoEBNF.Lexing
 {
-    public interface IToken
+    public interface IToken : IEquatable<IToken>
     {
         Guid Guid { get; }
 

@@ -92,17 +92,17 @@ namespace PseudoEBNF.Common
             GetRule(name).AttachAction(action);
         }
 
-        internal IRule DefineString(string name, string text)
+        public StringToken DefineString(string name, string text)
         {
-            return DefineToken(name, new StringToken(name, text));
+            return (StringToken)DefineToken(name, new StringToken(name, text));
         }
 
-        internal IRule DefineRegex(string name, string pattern)
+        public RegexToken DefineRegex(string name, string pattern)
         {
-            return DefineToken(name, new RegexToken(name, pattern));
+            return (RegexToken)DefineToken(name, new RegexToken(name, pattern));
         }
 
-        IRule DefineToken(string name, IToken token)
+        IToken DefineToken(string name, IToken token)
         {
             if (IsLocked)
             {
@@ -116,7 +116,10 @@ namespace PseudoEBNF.Common
             {
                 rule = new NameRule(RuleName.Implicit).And(rule);
             }
-            return DefineRule(name, rule);
+
+            DefineRule(name, rule);
+
+            return token;
         }
     }
 }
