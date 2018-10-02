@@ -123,13 +123,16 @@ namespace Tests
         {
             var parser = new PseudoEBNF.JavaScript.Parser();
 
-            var tree = parser.Parse(@"
-document.getElementById('demo').innerHTML = Date()
-");
+            var tree = parser.Parse(Standard.Text);
+        }
 
-            tree = parser.Parse(@"
-document.getElementById('demo').innerHTML = new Date()
-");
+        public void ParseTree()
+        {
+            var lexemes = Standard.Lexemes;
+
+            var parser = Standard.Parser;
+
+            var parseTree = parser.ParseSyntax(lexemes);
         }
     }
 }

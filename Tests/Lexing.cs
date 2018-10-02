@@ -60,49 +60,11 @@ namespace Tests
         [TestMethod]
         public void LexemeListComparison()
         {
-            var ident = new RegexToken("ident", @"(\w|\$)(\w|\$|\d)*");
-            var singleString = new RegexToken("singleString", @"'(?:[^\']|\\'|\\[^'])*'");
-            var ws = new RegexToken("ws", @"\s+");
-            var dot = new StringToken("dot", @".");
-            var leftParen = new StringToken("leftParen", @"(");
-            var rightParen = new StringToken("rightParen", @")");
-            var assign = new StringToken("assign", @"=");
+            var a = Standard.Lexemes;
 
-            var a = new LexemeList
-            {
-                { ident, "document", 0 },
-                { dot, ".", 8 },
-                { ident, "getElementById", 9 },
-                { leftParen, "(", 23 },
-                { singleString, "'demo'", 24 },
-                { rightParen, ")", 30 },
-                { dot, ".", 31 },
-                { ident, "innerHTML", 32 },
-                { ws, " ", 41 },
-                { assign, "=", 42 },
-                { ws, " ", 43 },
-                { ident, "Date", 44 },
-                { leftParen, "(", 48 },
-                { rightParen, ")", 49 },
-            };
-
-            var b = new LexemeList
-            {
-                { ident, "document", 0 },
-                { dot, ".", 8 },
-                { ident, "getElementById", 9 },
-                { leftParen, "(", 23 },
-                { singleString, "'demo'", 24 },
-                { rightParen, ")", 30 },
-                { dot, ".", 31 },
-                { ident, "innerHTML", 32 },
-                { ws, " ", 41 },
-                { assign, "=", 42 },
-                { ws, " ", 43 },
-                { ident, "Date", 44 },
-                { leftParen, "(", 48 },
-                { rightParen, ")", 49 },
-            };
+            var b = a
+                .Select(l => new Lexeme(l.Token, l.MatchedText, l.StartIndex))
+                .ToList();
 
             Assert.IsTrue(a.Equals(b));
         }
@@ -110,41 +72,11 @@ namespace Tests
         [TestMethod]
         public void LexemeList()
         {
-            var grammar = new Grammar();
+            var standard = Standard.Lexemes;
 
-            var ident = grammar.DefineRegex("ident", @"(\w|\$)(\w|\$|\d)*");
-            var singleString = grammar.DefineRegex("singleString", @"'(?:[^\']|\\'|\\[^'])*'");
-            var ws = grammar.DefineRegex("ws", @"\s+");
-            var dot = grammar.DefineString("dot", @".");
-            var leftParen = grammar.DefineString("leftParen", @"(");
-            var rightParen = grammar.DefineString("rightParen", @")");
-            var assign = grammar.DefineString("assign", @"=");
+            var lexer = new Lexer(Standard.Grammar);
 
-            var standard = new LexemeList
-            {
-                { ws, "\r\n", 0 },
-                { ident, "document", 2 },
-                { dot, ".", 10 },
-                { ident, "getElementById", 11 },
-                { leftParen, "(", 25 },
-                { singleString, "'demo'", 26 },
-                { rightParen, ")", 32 },
-                { dot, ".", 33 },
-                { ident, "innerHTML", 34 },
-                { ws, " ", 43 },
-                { assign, "=", 44 },
-                { ws, " ", 45 },
-                { ident, "Date", 46 },
-                { leftParen, "(", 50 },
-                { rightParen, ")", 51 },
-                { ws, "\r\n", 52 },
-            };
-
-            var lexer = new Lexer(grammar);
-
-            var lexemes = lexer.Lex(@"
-document.getElementById('demo').innerHTML = Date()
-")
+            var lexemes = lexer.Lex(Standard.Text)
                 .ToList();
 
             Assert.IsTrue(standard.Equals(lexemes));

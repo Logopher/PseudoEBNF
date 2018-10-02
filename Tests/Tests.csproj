@@ -54,6 +54,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Parsing.cs" />
     <Compile Include="RuleActions.cs" />
+    <Compile Include="Standard.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

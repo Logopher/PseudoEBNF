@@ -36,11 +36,16 @@ namespace PseudoEBNF.Lexing
 
         public IEnumerable<Lexeme> Lex(string input)
         {
+            var @implicit = grammar.ImplicitNames
+                .Select(GetToken)
+                .Where(t => t != null)
+                .ToArray();
+
             var prevIndex = 0;
             var index = 0;
             while (index < input.Length)
             {
-                foreach (var token in grammar.ImplicitNames.Select(GetToken).Where(t => t != null))
+                foreach (var token in @implicit)
                 {
                     var match = token.Match(input, index);
                     if (match.Success)
