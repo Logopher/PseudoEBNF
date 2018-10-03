@@ -146,7 +146,9 @@ root = statement *statement;
             {
                 var first = recurse(branch.GetDescendant(0));
                 var rest = branch.GetDescendant(1)
-                    .Branches.Select(recurse);
+                    .Elements
+                    .Select(recurse)
+                    .ToArray();
 
                 return new BranchSemanticNode((int)JsNodeType.Root, first, rest);
             });
@@ -162,7 +164,9 @@ root = statement *statement;
             {
                 var first = recurse(branch.GetDescendant(1, 0));
                 var rest = branch.GetDescendant(2)
-                    .Branches.Select(n => recurse(n.GetDescendant(1, 0)));
+                    .Elements
+                    .Select(n => recurse(n.GetDescendant(1, 0)))
+                    .ToArray();
 
                 return new BranchSemanticNode((int)JsNodeType.Variable, first, rest);
             });
@@ -218,7 +222,12 @@ root = statement *statement;
 
             parser.AttachAction("object", (branch, recurse) =>
             {
-                var first = recurse(branch.GetDescendant(1, 0));
+                var firstNode = branch.GetDescendant(1, 0);
+
+                if (firstNode == null)
+                { return new BranchSemanticNode((int)JsNodeType.Object, new ISemanticNode[0]); }
+
+                var first = recurse(firstNode);
                 var rest = branch.GetDescendant(1, 1)
                     .Branches.Select(n => recurse(n.GetDescendant(1)));
 

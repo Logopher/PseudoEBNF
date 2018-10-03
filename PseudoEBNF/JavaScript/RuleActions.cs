@@ -47,14 +47,23 @@ namespace PseudoEBNF.JavaScript
         {
             var named = (NamedRule)fragments.Rule;
 
-            var first = recurse(fragments.GetDescendant(0, 0));
-            var rest = fragments
-                .GetDescendant(1)
-                .Elements
-                .Select(n => recurse(n.GetDescendant(0)))
-                .ToArray();
+            var first = recurse(fragments.GetDescendant(0));
+            ISemanticNode[] rest;
 
-            return Utilities.List(first, rest);
+            var restNode = fragments.GetDescendant(1);
+            if (restNode != null)
+            {
+                rest = restNode
+                    .Elements
+                    .Select(recurse)
+                    .ToArray();
+
+                return new[] { first }.Concat(rest).ToList();
+            }
+            else
+            {
+                return new[] { first }.ToList();
+            }
         }
 
         static ISemanticNode CompositeExpression(ISemanticNode first, params ISemanticNode[] rest)

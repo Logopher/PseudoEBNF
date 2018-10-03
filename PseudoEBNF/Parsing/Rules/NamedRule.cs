@@ -61,25 +61,24 @@ namespace PseudoEBNF.Parsing.Rules
 
         static ISemanticNode DefaultAction(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
+            if (branch.Rule is NamedRule rule)
+            { throw new Exception($"No action specified for named rule: {rule.Name}"); }
+
             branch = branch.Unwrap();
 
-            if (branch.Rule is NamedRule rule)
+            if (branch.Rule is NamedRule)
+            { return recurse(branch); }
+
+            var children = branch.Elements
+            .Select(n =>
             {
-                throw new Exception($"No action specified for named rule: {rule.Name}");
-            }
-
-            var children = branch.Branches
-                .Select(c =>
-                {
-                    c = c.Unwrap();
-
-                    if (c.Rule is NamedRule)
-                    { return recurse(c); }
-                    else
-                    { return DefaultAction(c, recurse); }
-                })
-                .Where(c => c != null)
-                .ToList();
+                if (n.Rule is NamedRule)
+                { return recurse(n); }
+                else
+                { return DefaultAction(n, recurse); }
+            })
+            .Where(c => c != null)
+            .ToList();
 
             if (children.Count == 1)
             {

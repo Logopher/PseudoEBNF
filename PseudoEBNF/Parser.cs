@@ -59,9 +59,11 @@ namespace PseudoEBNF
 
         public IParseNode ParseSyntax(string input)
         {
-            var lexemes = Lex(input);
+            var grammar = ProduceGrammar();
 
-            return ParseSyntax(lexemes);
+            var lexemes = Lex(grammar, input);
+
+            return ParseSyntax(grammar, lexemes);
         }
 
         public IEnumerable<Lexeme> Lex(string input)

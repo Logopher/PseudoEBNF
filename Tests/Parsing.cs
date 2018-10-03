@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PseudoEBNF;
 using PseudoEBNF.Common;
-using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Semantics;
 
@@ -126,6 +125,7 @@ namespace Tests
             var tree = parser.Parse(Standard.Text);
         }
 
+        [TestMethod]
         public void ParseTree()
         {
             var lexemes = Standard.Lexemes;
@@ -133,6 +133,16 @@ namespace Tests
             var parser = Standard.ParserManager;
 
             var parseTree = parser.ParseSyntax(lexemes);
+        }
+
+        [TestMethod]
+        public void RealCode()
+        {
+            var source = Resources.LoadString("Tests.Resources.angular-mocks.js");
+
+            var parser = new PseudoEBNF.JavaScript.Parser();
+
+            var tree = parser.Parse(source);
         }
     }
 }
