@@ -45,18 +45,12 @@ namespace PseudoEBNF.JavaScript
 
         static List<ISemanticNode> ExpressionFragments(BranchParseNode fragments, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var named = (NamedRule)fragments.Rule;
-
             var first = recurse(fragments.GetDescendant(0));
-            ISemanticNode[] rest;
 
             var restNode = fragments.GetDescendant(1);
             if (restNode != null)
             {
-                rest = restNode
-                    .Elements
-                    .Select(recurse)
-                    .ToArray();
+                var rest = ExpressionFragments(restNode, recurse);
 
                 return new[] { first }.Concat(rest).ToList();
             }

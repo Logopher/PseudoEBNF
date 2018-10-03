@@ -1,5 +1,5 @@
-﻿using PseudoEBNF.Common;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace PseudoEBNF.Semantics
 {
@@ -23,7 +23,7 @@ namespace PseudoEBNF.Semantics
         }
 
         public BranchSemanticNode(int nodeType, ISemanticNode first, IEnumerable<ISemanticNode> rest)
-            : this(nodeType, Utilities.List(first, rest))
+            : this(nodeType, new[] { first }.Concat(rest))
         {
         }
     }

@@ -1,10 +1,13 @@
-﻿using PseudoEBNF.Common;
+﻿using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Semantics;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PseudoEBNF.JavaScript
 {
-    public class Parser
+    public class Parser : IParser
     {
         global::PseudoEBNF.Parser parser;
 
@@ -197,7 +200,7 @@ root = statement *statement;
                     .Select(n => recurse(n.GetDescendant(1)))
                     .ToArray();
 
-                return new BranchSemanticNode((int)JsNodeType.ArgumentList, Utilities.List(first, rest));
+                return new BranchSemanticNode((int)JsNodeType.ArgumentList, new[] { first }.Concat(rest));
             });
 
             parser.AttachAction("dotRef", (branch, recurse) =>
@@ -229,7 +232,9 @@ root = statement *statement;
 
                 var first = recurse(firstNode);
                 var rest = branch.GetDescendant(1, 1)
-                    .Branches.Select(n => recurse(n.GetDescendant(1)));
+                    .Elements
+                    .Select(n => recurse(n.GetDescendant(1)))
+                    .ToArray();
 
                 return new BranchSemanticNode((int)JsNodeType.Object, first, rest);
             });
@@ -263,7 +268,9 @@ root = statement *statement;
             {
                 var first = recurse(branch.GetDescendant(1, 0));
                 var rest = branch.GetDescendant(1, 1)
-                    .Branches.Select(n => recurse(n.GetDescendant(1)));
+                    .Elements
+                    .Select(n => recurse(n.GetDescendant(1)))
+                    .ToArray();
 
                 return new BranchSemanticNode((int)JsNodeType.ParameterList, first, rest);
             });
@@ -271,7 +278,9 @@ root = statement *statement;
             parser.AttachAction("block", (branch, recurse) =>
             {
                 var stmts = branch.GetDescendant(1)
-                    .Branches.Select(recurse);
+                    .Elements
+                    .Select(recurse)
+                    .ToArray();
 
                 return new BranchSemanticNode((int)JsNodeType.Block, stmts);
             });
@@ -384,9 +393,39 @@ root = statement *statement;
             //*/
         }
 
+        public NamedRule GetRule(string name)
+        {
+            return parser.GetRule(name);
+        }
+
+        public IToken GetToken(string name)
+        {
+            return parser.GetToken(name);
+        }
+
+        public IEnumerable<Lexeme> Lex(string input)
+        {
+            return parser.Lex(input);
+        }
+
         public ISemanticNode Parse(string input)
         {
             return parser.Parse(input);
+        }
+
+        public ISemanticNode ParseSemantics(BranchParseNode node)
+        {
+            return parser.ParseSemantics(node);
+        }
+
+        public IParseNode ParseSyntax(string input)
+        {
+            return parser.ParseSyntax(input);
+        }
+
+        public BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes)
+        {
+            return parser.ParseSyntax(lexemes);
         }
     }
 }

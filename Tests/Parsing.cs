@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PseudoEBNF;
 using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Nodes;
@@ -118,21 +119,28 @@ namespace Tests
         }
 
         [TestMethod]
-        public void JavaScript()
-        {
-            var parser = new PseudoEBNF.JavaScript.Parser();
-
-            var tree = parser.Parse(Standard.Text);
-        }
-
-        [TestMethod]
-        public void ParseTree()
+        public void ParseSyntax()
         {
             var lexemes = Standard.Lexemes;
 
-            var parser = Standard.ParserManager;
+            var parser = Standard.Parser;
 
-            var parseTree = parser.ParseSyntax(lexemes);
+            var tree = parser.ParseSyntax(lexemes);
+
+            Assert.AreEqual(54, tree.Length);
+            Assert.AreEqual(52, tree.GetDescendant(0, 0, 0, 0).Length);
+            Assert.AreEqual("'demo'", tree.GetDescendant(0, 0, 0, 0, 1, 1, 0, 0, 1).MatchedText);
+            Assert.AreEqual(0, tree.GetDescendant(1).Branches.Count);
+        }
+
+        [TestMethod]
+        public void Parse()
+        {
+            var text = Standard.Text;
+
+            var parser = Standard.Parser;
+
+            var tree = parser.Parse(text);
         }
 
         [TestMethod]
@@ -140,7 +148,7 @@ namespace Tests
         {
             var source = Resources.LoadString("Tests.Resources.angular-mocks.js");
 
-            var parser = new PseudoEBNF.JavaScript.Parser();
+            var parser = Standard.Parser;
 
             var tree = parser.Parse(source);
         }

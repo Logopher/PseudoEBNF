@@ -22,6 +22,11 @@ namespace PseudoEBNF.Parsing.Nodes
         public IReadOnlyList<BranchParseNode> Branches => !IsTwig ? _branches : throw new Exception();
         public IReadOnlyList<BranchParseNode> Elements => !IsTwig ? _elements : throw new Exception();
 
+        public BranchParseNode(IRule rule, params IParseNode[] nodes)
+            : this(rule, (IEnumerable<IParseNode>)nodes)
+        {
+        }
+
         public BranchParseNode(IRule rule, IEnumerable<IParseNode> nodes)
         {
             Rule = rule;
@@ -97,7 +102,7 @@ namespace PseudoEBNF.Parsing.Nodes
 
         public BranchParseNode GetDescendant(int first, params int[] rest)
         {
-            var address = Utilities.List(first, rest);
+            var address = new[] { first }.Concat(rest);
 
             BranchParseNode branch;
             if (Rule is NamedRule)

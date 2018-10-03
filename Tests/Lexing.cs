@@ -75,7 +75,7 @@ namespace Tests
         {
             var expected = Standard.Lexemes;
 
-            var parser = Standard.ParserManager;
+            var parser = Standard.Parser;
 
             var lexemes = parser.Lex(Standard.Text)
                 .ToList();

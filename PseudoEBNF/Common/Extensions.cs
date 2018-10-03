@@ -1,5 +1,4 @@
-﻿using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing.Rules;
+﻿using PseudoEBNF.Parsing.Rules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,12 +9,12 @@ namespace PseudoEBNF.Common
     {
         public static AndRule And(this IRule rule, IRule first, params IRule[] rest)
         {
-            return new AndRule(Utilities.List(rule, first, rest));
+            return new AndRule(new[] { rule, first }.Concat(rest));
         }
 
         public static OrRule Or(this IRule rule, IRule first, params IRule[] rest)
         {
-            return new OrRule(Utilities.List(rule, first, rest));
+            return new OrRule(new[] { rule, first }.Concat(rest));
         }
 
         public static Dictionary<K, V> Merge<K, V>(this IDictionary<K, V> self, DictionaryMergeCollisionBehavior collisionBehavior, IEnumerable<IDictionary<K, V>> rest)
@@ -52,7 +51,7 @@ namespace PseudoEBNF.Common
 
         public static Dictionary<K, V> Merge<K, V>(this IDictionary<K, V> self, DictionaryMergeCollisionBehavior collisionBehavior, IDictionary<K, V> first, params IDictionary<K, V>[] rest)
         {
-            return Merge(self, collisionBehavior, Utilities.List(first, rest));
+            return Merge(self, collisionBehavior, new[] { first }.Concat(rest));
         }
     }
 }

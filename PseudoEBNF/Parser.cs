@@ -10,7 +10,7 @@ using System.Linq;
 
 namespace PseudoEBNF
 {
-    public class Parser
+    public class Parser : IParser
     {
         readonly Supervisor super = new Supervisor();
         readonly Grammar grammar = new Grammar();
@@ -34,7 +34,7 @@ namespace PseudoEBNF
             grammar.DefineRegex(name, value);
         }
 
-        internal NamedRule GetRule(string name)
+        public NamedRule GetRule(string name)
         {
             return grammar.GetRule(name);
         }
