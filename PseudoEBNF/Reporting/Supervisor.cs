@@ -1,4 +1,5 @@
 ﻿using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Rules;
 using System.Collections;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace PseudoEBNF.Reporting
 
         int Depth => stack.Count - 1;
 
-        public Supervisor()
+        internal Supervisor()
         {
             stack.Push(root);
         }
@@ -64,9 +65,25 @@ namespace PseudoEBNF.Reporting
             }
         }
 
+        internal void ReportHypothesis(IToken token, int? index)
+        {
+            WriteLine($"? {token.Name}", index ?? -1);
+        }
+
+        public void ReportFailure(IToken token)
+        {
+
+        }
+
+        public void ReportSuccess(IToken token, string text)
+        {
+            WriteLine($@"+ {token.Name}
+{text}");
+        }
+
         void WriteLine(string text, int? index = null)
         {
-            if(@implicit)
+            if (@implicit)
             {
                 return;
             }

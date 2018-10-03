@@ -25,7 +25,7 @@ namespace PseudoEBNF.Common
 
         public bool IsLocked { get; private set; }
 
-        public Grammar()
+        internal Grammar()
         {
             tokens = new Dictionary<string, IToken>();
             rules = new Dictionary<string, NamedRule>();
@@ -49,10 +49,17 @@ namespace PseudoEBNF.Common
 
         public void Lock()
         {
+            DefineRule(RuleName.Implicit, new RepeatRule(
+                new OrRule(ImplicitNames
+                    .Select(GetRule)
+                    .Where(r => r != null))));
+
+            AttachAction(RuleName.Implicit, (n, r) => null);
+
             IsLocked = true;
         }
 
-        public IRule DefineRule(string name, IRule rule)
+        public void DefineRule(string name, IRule rule)
         {
             if (IsLocked)
             {
@@ -67,13 +74,17 @@ namespace PseudoEBNF.Common
             var named = new NamedRule(name, rule);
 
             rules.Add(name, named);
-
-            return named;
         }
 
         public NamedRule GetRule(string name)
         {
             Rules.TryGetValue(name, out NamedRule result);
+            return result;
+        }
+
+        public IToken GetToken(string name)
+        {
+            Tokens.TryGetValue(name, out IToken result);
             return result;
         }
 

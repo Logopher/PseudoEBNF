@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PseudoEBNF;
 using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using System;
@@ -13,47 +14,47 @@ namespace Tests
         [TestMethod]
         public void ImplicitWhitespace()
         {
-            var lexer = new Lexer();
-            lexer.SetImplicit(RuleName.Whitespace);
+            var parser = new Parser();
+            parser.SetImplicit(RuleName.Whitespace);
 
             List<Lexeme> lexemes;
 
-            lexer.DefineRegex(RuleName.Identifier, @"\w+");
+            parser.DefineRegex(RuleName.Identifier, @"\w+");
 
-            lexemes = lexer.Lex("a").ToList();
+            lexemes = parser.Lex("a").ToList();
             Assert.AreEqual(lexemes.Count, 1);
 
             Assert.ThrowsException<Exception>(() =>
             {
-                lexer.Lex("a b c").ToList();
+                parser.Lex("a b c").ToList();
             });
 
-            lexer.DefineRegex(RuleName.Whitespace, @"\s+");
+            parser.DefineRegex(RuleName.Whitespace, @"\s+");
 
-            lexemes = lexer.Lex("a b c").ToList();
+            lexemes = parser.Lex("a b c").ToList();
             Assert.AreEqual(lexemes.Count, 5);
         }
 
         [TestMethod]
         public void ExplicitWhitespace()
         {
-            var lexer = new Lexer();
+            var parser = new Parser();
 
             List<Lexeme> lexemes;
 
-            lexer.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
+            parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
 
-            lexemes = lexer.Lex("a").ToList();
+            lexemes = parser.Lex("a").ToList();
             Assert.AreEqual(lexemes.Count, 1);
 
             Assert.ThrowsException<Exception>(() =>
             {
-                lexer.Lex("a b c").ToList();
+                parser.Lex("a b c").ToList();
             });
 
-            lexer.DefineRegex(RuleName.Whitespace, @"\s+");
+            parser.DefineRegex(RuleName.Whitespace, @"\s+");
 
-            lexemes = lexer.Lex("a b c").ToList();
+            lexemes = parser.Lex("a b c").ToList();
             Assert.AreEqual(lexemes.Count, 5);
         }
 
@@ -72,14 +73,14 @@ namespace Tests
         [TestMethod]
         public void LexemeList()
         {
-            var standard = Standard.Lexemes;
+            var expected = Standard.Lexemes;
 
-            var lexer = new Lexer(Standard.Grammar);
+            var parser = Standard.ParserManager;
 
-            var lexemes = lexer.Lex(Standard.Text)
+            var lexemes = parser.Lex(Standard.Text)
                 .ToList();
 
-            Assert.IsTrue(standard.Equals(lexemes));
+            Assert.IsTrue(expected.Equals(lexemes));
         }
     }
 }

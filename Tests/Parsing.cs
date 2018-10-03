@@ -130,7 +130,7 @@ namespace Tests
         {
             var lexemes = Standard.Lexemes;
 
-            var parser = Standard.Parser;
+            var parser = Standard.ParserManager;
 
             var parseTree = parser.ParseSyntax(lexemes);
         }

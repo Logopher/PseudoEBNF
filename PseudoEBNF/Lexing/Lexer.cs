@@ -1,11 +1,12 @@
 ﻿using PseudoEBNF.Common;
+using PseudoEBNF.Reporting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace PseudoEBNF.Lexing
 {
-    public class Lexer
+    internal class Lexer
     {
         Grammar grammar;
 
@@ -34,8 +35,10 @@ namespace PseudoEBNF.Lexing
             return grammar.DefineString(name, text);
         }
 
-        public IEnumerable<Lexeme> Lex(string input)
+        public IEnumerable<Lexeme> Lex(Supervisor super, string input)
         {
+            var results = new List<Lexeme>();
+
             var @implicit = grammar.ImplicitNames
                 .Select(GetToken)
                 .Where(t => t != null)
@@ -52,7 +55,7 @@ namespace PseudoEBNF.Lexing
                     {
                         var lexeme = match.Result;
                         index += lexeme.Length;
-                        yield return lexeme;
+                        results.Add(lexeme);
                     }
                 }
 
@@ -61,12 +64,15 @@ namespace PseudoEBNF.Lexing
                     var name = pair.Key;
                     var token = pair.Value;
 
+                    super.ReportHypothesis(token, index);
+
                     var match = token.Match(input, index);
                     if (match.Success)
                     {
                         var lexeme = match.Result;
                         index += lexeme.Length;
-                        yield return lexeme;
+                        results.Add(lexeme);
+                        super.ReportSuccess(token, lexeme.MatchedText);
                         break;
                     }
                 }
@@ -77,6 +83,8 @@ namespace PseudoEBNF.Lexing
                 }
                 prevIndex = index;
             }
+
+            return results;
         }
 
         public IToken GetToken(string name)

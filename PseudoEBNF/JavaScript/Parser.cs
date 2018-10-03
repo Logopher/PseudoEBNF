@@ -6,7 +6,7 @@ namespace PseudoEBNF.JavaScript
 {
     public class Parser
     {
-        Parsing.Parser parser;
+        global::PseudoEBNF.Parser parser;
 
         public Parser()
         {
@@ -15,15 +15,6 @@ functionKeyword = /(?<!\w)function(?!\w)/;
 varKeyword = /(?<!\w)var(?!\w)/;
 letKeyword = /(?<!\w)let(?!\w)/;
 newKeyword = /(?<!\w)new(?!\w)/;
-
-ws = /\s+/;
-ident = /\w(?:\w|\d)*/;
-number = /\d+(?:\.\d+)?/;
-doubleString = /""(?:\\\\""|\\\\|[^""])+""/;
-singleString = /'(?:\\\\'|\\\\|[^'])+'/;
-regex = /\/(?:\\\\\/|\\\\|[^\/])+\//;
-lineComment = /\/\/[^{"\r\n"}]*/;
-blockComment = /\/\*([^*]|\*[^\/])*\*\//;
 
 leftBracket = ""{{"";
 rightBracket = ""}}"";
@@ -45,10 +36,39 @@ and = ""&&"";
 or = ""||"";
 not = ""!"";
 
+strictEquality = ""==="";
+strictInequality = ""!=="";
+equality = ""=="";
+inequality = ""!="";
+lessThanOrEqual = ""<="";
+greaterThanOrEqual = "">="";
+lessThan = ""<"";
+greaterThan = "">"";
+
+ws = /\s+/;
+ident = /(?:\$|\w)(?:\$|\w|\d)*/;
+number = /\d+(?:\.\d+)?/;
+doubleString = /""(?:\\\\""|\\\\[^""]|[^""\\\\])*""/;
+singleString = /'(?:\\\\'|\\\\[^']|[^'\\\\])*'/;
+regex = /\/(?:\\\\\/|\\\\|[^\/])+\/[A-Za-z]*/;
+lineComment = /\/\/[^{"\r\n"}]*/;
+blockComment = /\/\*([^*]|\*[^\/])*\*\//;
+
+minusEquals = ""-="";
+plusEquals = ""+="";
+timesEquals = ""*="";
+divideEquals = ""/="";
+modulusEquals = ""%="";
+
+bitAndEquals = ""&="";
+bitOrEquals = ""|="";
+bitXorEquals = ""^="";
+
 minus = ""-"";
 plus = ""+"";
 times = ""*"";
 divide = ""/"";
+modulus = ""%"";
 
 bitAnd = ""&"";
 bitOr = ""|"";
@@ -98,8 +118,9 @@ compositeExpression = simpleExpr (dotRefExpression | keyExpression);
 
 ternary = expr question superExpr colon superExpr; 
 
-localAssignment = ident equals superExpr;
-propertyAssignment = simpleExpr (dotRefExpression | keyExpression) equals superExpr;
+assignOper = equals | minusEquals | plusEquals | timesEquals | divideEquals | modulusEquals | bitAndEquals | bitOrEquals | bitXorEquals;
+localAssignment = ident assignOper superExpr;
+propertyAssignment = simpleExpr (dotRefExpression | keyExpression) assignOper superExpr;
 assignment = localAssignment | propertyAssignment;
 
 variable = localAssignment | ident;

@@ -6,7 +6,11 @@ using System.Linq;
 
 namespace Tests
 {
+#pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
+#pragma warning disable CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
     internal class LexemeList : IList<Lexeme>, IEquatable<IEnumerable<Lexeme>>
+#pragma warning restore CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
+#pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
     {
         readonly List<Lexeme> data = new List<Lexeme>();
 

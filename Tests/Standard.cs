@@ -1,4 +1,5 @@
-﻿using PseudoEBNF.Common;
+﻿using PseudoEBNF;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing;
 
@@ -12,25 +13,27 @@ document.getElementById('demo').innerHTML = Date()
 
         public static LexemeList Lexemes { get; }
 
-        public static Grammar Grammar { get; }
-
-        public static Lexer Lexer { get; }
-
-        public static Parser Parser { get; }
+        public static Parser ParserManager { get; }
 
         static Standard()
         {
-            Grammar = new Grammar();
+            ParserManager = new Parser();
 
-            Lexer = new Lexer(Grammar);
+            ParserManager.DefineRegex("ident", @"(\w|\$)(\w|\$|\d)*");
+            ParserManager.DefineRegex("singleString", @"'(?:[^\']|\\'|\\[^'])*'");
+            ParserManager.DefineRegex("ws", @"\s+");
+            ParserManager.DefineString("dot", @".");
+            ParserManager.DefineString("leftParen", @"(");
+            ParserManager.DefineString("rightParen", @")");
+            ParserManager.DefineString("assign", @"=");
 
-            var ident = Grammar.DefineRegex("ident", @"(\w|\$)(\w|\$|\d)*");
-            var singleString = Grammar.DefineRegex("singleString", @"'(?:[^\']|\\'|\\[^'])*'");
-            var ws = Grammar.DefineRegex("ws", @"\s+");
-            var dot = Grammar.DefineString("dot", @".");
-            var leftParen = Grammar.DefineString("leftParen", @"(");
-            var rightParen = Grammar.DefineString("rightParen", @")");
-            var assign = Grammar.DefineString("assign", @"=");
+            var ident = ParserManager.GetToken("ident");
+            var singleString = ParserManager.GetToken("singleString");
+            var ws = ParserManager.GetToken("ws");
+            var dot = ParserManager.GetToken("dot");
+            var leftParen = ParserManager.GetToken("leftParen");
+            var rightParen = ParserManager.GetToken("rightParen");
+            var assign = ParserManager.GetToken("assign");
 
             Lexemes = new LexemeList
             {
