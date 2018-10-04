@@ -1,21 +1,25 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Reporting;
-using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace PseudoEBNF.Parsing.Rules
 {
     public class AndRule : IRule
     {
+        public Guid CompatibilityGuid { get; }
+
         public IList<IRule> Children { get; }
 
-        public AndRule(IEnumerable<IRule> rules)
+        public AndRule(Guid compatibilityGuid, IEnumerable<IRule> rules)
         {
+            CompatibilityGuid = compatibilityGuid;
+
+            if (rules.Any(r => r.CompatibilityGuid != compatibilityGuid))
+            { throw new Exception(); }
+
             Children = rules
                 .SelectMany(r =>
                 {
@@ -33,17 +37,17 @@ namespace PseudoEBNF.Parsing.Rules
 
         public IRule Clone()
         {
-            return new AndRule(Children.Select(n => n.Clone()));
+            return new AndRule(CompatibilityGuid, Children.Select(n => n.Clone()));
         }
 
-        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var index = 0;
             var results = new List<IParseNode>();
 
             foreach (var rule in Children)
             {
-                var match = rule.Match(super, grammar, lexemes.GetRange(index, lexemes.Count - index));
+                var match = rule.Match(lexemes.GetRange(index, lexemes.Count - index));
                 if (match.Success)
                 {
                     if (match.Result != null)

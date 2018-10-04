@@ -11,21 +11,32 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class NotRule : IRule
     {
-        IRule rule;
+        public Guid CompatibilityGuid { get; }
 
-        public NotRule(IRule rule)
+        public IRule Rule { get; }
+
+        public Supervisor Super { get; }
+
+        public Grammar Grammar { get; }
+
+        public NotRule(Guid compatibilityGuid, IRule rule)
         {
-            this.rule = rule;
+            CompatibilityGuid = compatibilityGuid;
+
+            if (rule.CompatibilityGuid != compatibilityGuid)
+            { throw new Exception(); }
+
+            Rule = rule;
         }
 
         public IRule Clone()
         {
-            return new NotRule(rule.Clone());
+            return new NotRule(CompatibilityGuid, Rule.Clone());
         }
 
-        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(List<Lexeme> lexemes)
         {
-            var match = rule.Match(super, grammar, lexemes);
+            var match = Rule.Match(lexemes);
             if (match.Success)
             {
                 return new Match<IParseNode>(match.Result, false);

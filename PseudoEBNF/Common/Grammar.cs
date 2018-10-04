@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
+using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
 using System;
 using System.Collections.Generic;
@@ -8,11 +9,15 @@ using System.Linq;
 
 namespace PseudoEBNF.Common
 {
-    public class Grammar
+    public class Grammar:ICompatible
     {
+        public Guid CompatibilityGuid { get; }
+
         Guid guid = Guid.NewGuid();
 
         public IRule RootRule => GetRule(RuleName.Root);
+
+        public Supervisor Super { get; }
 
         readonly Dictionary<string, IToken> tokens;
         public IReadOnlyDictionary<string, IToken> Tokens => tokens;
@@ -25,8 +30,10 @@ namespace PseudoEBNF.Common
 
         public bool IsLocked { get; private set; }
 
-        internal Grammar()
+        internal Grammar(Guid compatibilityGuid, Supervisor super)
         {
+            CompatibilityGuid = compatibilityGuid;
+            Super = super;
             tokens = new Dictionary<string, IToken>();
             rules = new Dictionary<string, NamedRule>();
             implicitNames = new List<string>();
@@ -49,8 +56,8 @@ namespace PseudoEBNF.Common
 
         public void Lock()
         {
-            DefineRule(RuleName.Implicit, new RepeatRule(
-                new OrRule(ImplicitNames
+            DefineRule(RuleName.Implicit, new RepeatRule(CompatibilityGuid,
+                new OrRule(CompatibilityGuid, ImplicitNames
                     .Select(GetRule)
                     .Where(r => r != null))));
 
@@ -68,10 +75,10 @@ namespace PseudoEBNF.Common
 
             if (name == RuleName.Root)
             {
-                rule = rule.And(new NameRule(RuleName.Implicit));
+                rule = rule.And(new NameRule(CompatibilityGuid, this, RuleName.Implicit));
             }
 
-            var named = new NamedRule(name, rule);
+            var named = new NamedRule(CompatibilityGuid, Super, name, rule);
 
             rules.Add(name, named);
         }
@@ -103,17 +110,17 @@ namespace PseudoEBNF.Common
             GetRule(name).AttachAction(action);
         }
 
-        public StringToken DefineString(string name, string text)
+        public void DefineString(string name, string text)
         {
-            return (StringToken)DefineToken(name, new StringToken(name, text));
+            DefineToken(name, new StringToken(CompatibilityGuid, name, text));
         }
 
-        public RegexToken DefineRegex(string name, string pattern)
+        public void DefineRegex(string name, string pattern)
         {
-            return (RegexToken)DefineToken(name, new RegexToken(name, pattern));
+            DefineToken(name, new RegexToken(CompatibilityGuid, name, pattern));
         }
 
-        IToken DefineToken(string name, IToken token)
+        void DefineToken(string name, IToken token)
         {
             if (IsLocked)
             {
@@ -122,15 +129,13 @@ namespace PseudoEBNF.Common
 
             tokens.Add(name, token);
 
-            IRule rule = new TokenRule(token);
+            IRule rule = new TokenRule(CompatibilityGuid, token);
             if (!ImplicitNames.Contains(name))
             {
-                rule = new NameRule(RuleName.Implicit).And(rule);
+                rule = new NameRule(CompatibilityGuid, this, RuleName.Implicit).And(rule);
             }
 
             DefineRule(name, rule);
-
-            return token;
         }
     }
 }

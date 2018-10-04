@@ -1,4 +1,5 @@
-﻿using PseudoEBNF.Lexing;
+﻿using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,11 +9,18 @@ namespace Tests
 {
 #pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 #pragma warning disable CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
-    internal class LexemeList : IList<Lexeme>, IEquatable<IEnumerable<Lexeme>>
+    internal class LexemeList : IList<Lexeme>, IEquatable<IEnumerable<Lexeme>>, ICompatible
 #pragma warning restore CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
 #pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
     {
+        public Guid CompatibilityGuid { get; }
+
         readonly List<Lexeme> data = new List<Lexeme>();
+
+        public LexemeList(Guid compatibilityGuid)
+        {
+            CompatibilityGuid = compatibilityGuid;
+        }
 
         public Lexeme this[int index]
         {
@@ -24,33 +32,72 @@ namespace Tests
 
         public bool IsReadOnly => ((IList<Lexeme>)data).IsReadOnly;
 
-        public void Add(Lexeme item) => data.Add(item);
+        public void Add(Lexeme item)
+        {
+            if(item.CompatibilityGuid != CompatibilityGuid)
+            { throw new Exception(); }
 
-        public void Add(IToken token, string text, int index) => data.Add(new Lexeme(token, text, index));
+            data.Add(item);
+        }
 
-        public void Clear() => data.Clear();
+        public void Add(IToken token, string text, int index)
+        {
+            Add(new Lexeme(token.CompatibilityGuid, token, text, index));
+        }
 
-        public bool Contains(Lexeme item) => data.Contains(item);
+        public void Clear()
+        {
+            data.Clear();
+        }
 
-        public void CopyTo(Lexeme[] array, int arrayIndex) => data.CopyTo(array, arrayIndex);
+        public bool Contains(Lexeme item)
+        {
+            return data.Contains(item);
+        }
 
-        public int IndexOf(Lexeme item) => data.IndexOf(item);
+        public void CopyTo(Lexeme[] array, int arrayIndex)
+        {
+            data.CopyTo(array, arrayIndex);
+        }
 
-        public void Insert(int index, Lexeme item) => data.Insert(index, item);
+        public int IndexOf(Lexeme item)
+        {
+            return data.IndexOf(item);
+        }
 
-        public bool Remove(Lexeme item) => data.Remove(item);
+        public void Insert(int index, Lexeme item)
+        {
+            if (item.CompatibilityGuid != CompatibilityGuid)
+            { throw new Exception(); }
 
-        public void RemoveAt(int index) => data.RemoveAt(index);
+            data.Insert(index, item);
+        }
 
-        public IEnumerator<Lexeme> GetEnumerator() => data.GetEnumerator();
+        public bool Remove(Lexeme item)
+        {
+            return data.Remove(item);
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public void RemoveAt(int index)
+        {
+            data.RemoveAt(index);
+        }
+
+        public IEnumerator<Lexeme> GetEnumerator()
+        {
+            return data.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public override bool Equals(object obj)
         {
             var list = (obj as IEnumerable<Lexeme>)?.ToList();
 
-            if(list == null)
+            if (list == null)
             { return false; }
 
             return Equals(list);
@@ -59,6 +106,9 @@ namespace Tests
         public bool Equals(IEnumerable<Lexeme> other)
         {
             var list = other as IList<Lexeme> ?? other.ToList();
+
+            if(list is LexemeList lexemeList && lexemeList.CompatibilityGuid != CompatibilityGuid)
+            { throw new Exception(); }
 
             return Count == list.Count
                 && data

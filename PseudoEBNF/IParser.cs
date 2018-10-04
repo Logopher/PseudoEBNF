@@ -1,4 +1,5 @@
-﻿using PseudoEBNF.Lexing;
+﻿using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Semantics;
@@ -6,8 +7,10 @@ using System.Collections.Generic;
 
 namespace PseudoEBNF
 {
-    public interface IParser
+    public interface IParser : ICompatible
     {
+        void Lock();
+
         ISemanticNode Parse(string input);
 
         NamedRule GetRule(string name);

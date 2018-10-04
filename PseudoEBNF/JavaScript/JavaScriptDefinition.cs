@@ -7,11 +7,9 @@ using System.Linq;
 
 namespace PseudoEBNF.JavaScript
 {
-    public class Parser : IParser
+    public static class JavaScriptDefinition
     {
-        global::PseudoEBNF.Parser parser;
-
-        public Parser()
+        public static IParser Parser()
         {
             var grammar = $@"
 functionKeyword = /(?<!\w)function(?!\w)/;
@@ -138,7 +136,7 @@ root = statement *statement;
 ";
 
             var parserGen = new ParserGenerator();
-            parser = parserGen.SpawnParser(grammar, "ws", "lineComment", "blockComment");
+            var parser = parserGen.SpawnParser(grammar, "ws", "lineComment", "blockComment");
 
             parser.SetImplicit("ws");
             parser.SetImplicit("blockComment");
@@ -391,41 +389,8 @@ root = statement *statement;
             parser.AttachAction("simpleExpr", RuleActions.Unwrap);
             parser.AttachAction("assignment", RuleActions.Unwrap);
             //*/
-        }
 
-        public NamedRule GetRule(string name)
-        {
-            return parser.GetRule(name);
-        }
-
-        public IToken GetToken(string name)
-        {
-            return parser.GetToken(name);
-        }
-
-        public IEnumerable<Lexeme> Lex(string input)
-        {
-            return parser.Lex(input);
-        }
-
-        public ISemanticNode Parse(string input)
-        {
-            return parser.Parse(input);
-        }
-
-        public ISemanticNode ParseSemantics(BranchParseNode node)
-        {
-            return parser.ParseSemantics(node);
-        }
-
-        public IParseNode ParseSyntax(string input)
-        {
-            return parser.ParseSyntax(input);
-        }
-
-        public BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes)
-        {
-            return parser.ParseSyntax(lexemes);
+            return parser;
         }
     }
 }

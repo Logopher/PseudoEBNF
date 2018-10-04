@@ -6,40 +6,51 @@ using System.Linq;
 
 namespace PseudoEBNF.Lexing
 {
-    internal class Lexer
+    public class Lexer : ICompatible
     {
-        Grammar grammar;
+        public Guid CompatibilityGuid { get; }
 
-        public Lexer(Grammar grammar)
+        public Supervisor Super { get; }
+
+        public Grammar Grammar { get; }
+
+        public Lexer(Supervisor super, Grammar grammar)
         {
-            this.grammar = grammar;
+            CompatibilityGuid = grammar.CompatibilityGuid;
+            Super = super;
+            Grammar = grammar;
         }
 
         public Lexer()
-            : this(new Grammar())
         {
+            CompatibilityGuid = Guid.NewGuid();
+            Super = new Supervisor();
+            Grammar = new Grammar(CompatibilityGuid, Super);
         }
 
         public void SetImplicit(string name)
         {
-            grammar.SetImplicit(name);
+            Grammar.SetImplicit(name);
         }
 
-        public RegexToken DefineRegex(string name, string pattern)
+        public void DefineRegex(string name, string pattern)
         {
-            return grammar.DefineRegex(name, pattern);
+            Grammar.DefineRegex(name, pattern);
         }
 
-        public StringToken DefineString(string name, string text)
+        public void DefineString(string name, string text)
         {
-            return grammar.DefineString(name, text);
+            Grammar.DefineString(name, text);
         }
 
         public IEnumerable<Lexeme> Lex(Supervisor super, string input)
         {
             var results = new List<Lexeme>();
 
-            var @implicit = grammar.ImplicitNames
+            if (Grammar.Tokens.Any(pair => pair.Value.CompatibilityGuid != CompatibilityGuid))
+            { throw new Exception(); }
+
+            var @implicit = Grammar.ImplicitNames
                 .Select(GetToken)
                 .Where(t => t != null)
                 .ToArray();
@@ -59,7 +70,7 @@ namespace PseudoEBNF.Lexing
                     }
                 }
 
-                foreach (var pair in grammar.Tokens)
+                foreach (var pair in Grammar.Tokens)
                 {
                     var name = pair.Key;
                     var token = pair.Value;
@@ -89,7 +100,7 @@ namespace PseudoEBNF.Lexing
 
         public IToken GetToken(string name)
         {
-            if (grammar.Tokens.TryGetValue(name, out IToken token))
+            if (Grammar.Tokens.TryGetValue(name, out IToken token))
             {
                 return token;
             }

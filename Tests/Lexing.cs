@@ -14,12 +14,15 @@ namespace Tests
         [TestMethod]
         public void ImplicitWhitespace()
         {
-            var parser = new Parser();
+            Parser parser;
+            List<Lexeme> lexemes;
+            
+            parser = new Parser();
             parser.SetImplicit(RuleName.Whitespace);
 
-            List<Lexeme> lexemes;
-
             parser.DefineRegex(RuleName.Identifier, @"\w+");
+
+            parser.Lock();
 
             lexemes = parser.Lex("a").ToList();
             Assert.AreEqual(lexemes.Count, 1);
@@ -29,7 +32,13 @@ namespace Tests
                 parser.Lex("a b c").ToList();
             });
 
+            parser = new Parser();
+            parser.SetImplicit(RuleName.Whitespace);
+
+            parser.DefineRegex(RuleName.Identifier, @"\w+");
             parser.DefineRegex(RuleName.Whitespace, @"\s+");
+
+            parser.Lock();
 
             lexemes = parser.Lex("a b c").ToList();
             Assert.AreEqual(lexemes.Count, 5);
@@ -38,11 +47,15 @@ namespace Tests
         [TestMethod]
         public void ExplicitWhitespace()
         {
-            var parser = new Parser();
+            Parser parser;
 
             List<Lexeme> lexemes;
 
+            parser = new Parser();
+
             parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
+
+            parser.Lock();
 
             lexemes = parser.Lex("a").ToList();
             Assert.AreEqual(lexemes.Count, 1);
@@ -52,7 +65,12 @@ namespace Tests
                 parser.Lex("a b c").ToList();
             });
 
+            parser = new Parser();
+            
+            parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
             parser.DefineRegex(RuleName.Whitespace, @"\s+");
+
+            parser.Lock();
 
             lexemes = parser.Lex("a b c").ToList();
             Assert.AreEqual(lexemes.Count, 5);
@@ -61,10 +79,10 @@ namespace Tests
         [TestMethod]
         public void LexemeListComparison()
         {
-            var a = Standard.Lexemes;
+            var a = Standard.GetLexemes();
 
             var b = a
-                .Select(l => new Lexeme(l.Token, l.MatchedText, l.StartIndex))
+                .Select(l => new Lexeme(l.CompatibilityGuid, l.Token, l.MatchedText, l.StartIndex))
                 .ToList();
 
             Assert.IsTrue(a.Equals(b));
@@ -73,9 +91,10 @@ namespace Tests
         [TestMethod]
         public void LexemeList()
         {
-            var expected = Standard.Lexemes;
-
-            var parser = Standard.Parser;
+            var parser = Standard.GetParser();
+            var expected = Standard.GetLexemes(parser);
+            
+            parser.Lock();
 
             var lexemes = parser.Lex(Standard.Text)
                 .ToList();

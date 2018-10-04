@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PseudoEBNF;
 using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Nodes;
@@ -67,6 +66,8 @@ namespace Tests
                 return new BranchSemanticNode(0, recurse(branch));
             });
 
+            parser.Lock();
+
             IParseNode node;
 
             node = parser.ParseSyntax("a");
@@ -121,9 +122,10 @@ namespace Tests
         [TestMethod]
         public void ParseSyntax()
         {
-            var lexemes = Standard.Lexemes;
+            var parser = Standard.GetParser();
+            var lexemes = Standard.GetLexemes(parser);
 
-            var parser = Standard.Parser;
+            parser.Lock();
 
             var tree = parser.ParseSyntax(lexemes);
 
@@ -138,7 +140,9 @@ namespace Tests
         {
             var text = Standard.Text;
 
-            var parser = Standard.Parser;
+            var parser = Standard.GetParser();
+
+            parser.Lock();
 
             var tree = parser.Parse(text);
         }
@@ -148,7 +152,9 @@ namespace Tests
         {
             var source = Resources.LoadString("Tests.Resources.angular-mocks.js");
 
-            var parser = Standard.Parser;
+            var parser = Standard.GetParser();
+
+            parser.Lock();
 
             var tree = parser.Parse(source);
         }

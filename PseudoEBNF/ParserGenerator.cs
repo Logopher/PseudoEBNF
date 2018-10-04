@@ -35,62 +35,62 @@ namespace PseudoEBNF
             parser.DefineRegex(RuleName.LineComment, @"//[^\r\n]*(?=[\r\n])");
 
             parser.DefineRule(RuleName.And,
-                new NameRule(RuleName.SimpleExpression)
-                    .And(new NameRule(RuleName.Expression)));
+                parser.ReferenceRule(RuleName.SimpleExpression)
+                    .And(parser.ReferenceRule(RuleName.Expression)));
 
             parser.DefineRule(RuleName.Or,
-                new NameRule(RuleName.SimpleExpression)
-                    .And(new NameRule(RuleName.Pipe),
-                        new NameRule(RuleName.Expression)));
+                parser.ReferenceRule(RuleName.SimpleExpression)
+                    .And(parser.ReferenceRule(RuleName.Pipe),
+                        parser.ReferenceRule(RuleName.Expression)));
 
             parser.DefineRule(RuleName.Not,
-                new NameRule(RuleName.ExclamationPoint)
-                    .And(new NameRule(RuleName.SimpleExpression)));
+                parser.ReferenceRule(RuleName.ExclamationPoint)
+                    .And(parser.ReferenceRule(RuleName.SimpleExpression)));
 
             parser.DefineRule(RuleName.Optional,
-                new NameRule(RuleName.QuestionMark)
-                    .And(new NameRule(RuleName.SimpleExpression)));
+                parser.ReferenceRule(RuleName.QuestionMark)
+                    .And(parser.ReferenceRule(RuleName.SimpleExpression)));
 
             parser.DefineRule(RuleName.Repeat,
-                new NameRule(RuleName.Asterisk)
-                    .And(new NameRule(RuleName.SimpleExpression)));
+                parser.ReferenceRule(RuleName.Asterisk)
+                    .And(parser.ReferenceRule(RuleName.SimpleExpression)));
 
             parser.DefineRule(RuleName.Group,
-                new NameRule(RuleName.LeftParenthesis)
-                    .And(new NameRule(RuleName.Expression),
-                        new NameRule(RuleName.RightParenthesis)));
+                parser.ReferenceRule(RuleName.LeftParenthesis)
+                    .And(parser.ReferenceRule(RuleName.Expression),
+                        parser.ReferenceRule(RuleName.RightParenthesis)));
 
             parser.DefineRule(RuleName.Literal,
-                new NameRule(RuleName.String)
-                    .Or(new NameRule(RuleName.Regex)));
+                parser.ReferenceRule(RuleName.String)
+                    .Or(parser.ReferenceRule(RuleName.Regex)));
 
             parser.DefineRule(RuleName.SimpleExpression,
-                new NameRule(RuleName.Optional)
-                    .Or(new NameRule(RuleName.Repeat),
-                        new NameRule(RuleName.Not),
-                        new NameRule(RuleName.Group),
-                        new NameRule(RuleName.Identifier)));
+                parser.ReferenceRule(RuleName.Optional)
+                    .Or(parser.ReferenceRule(RuleName.Repeat),
+                        parser.ReferenceRule(RuleName.Not),
+                        parser.ReferenceRule(RuleName.Group),
+                        parser.ReferenceRule(RuleName.Identifier)));
 
             parser.DefineRule(RuleName.Expression,
-                new NameRule(RuleName.Or)
-                    .Or(new NameRule(RuleName.And),
-                        new NameRule(RuleName.SimpleExpression)));
+                parser.ReferenceRule(RuleName.Or)
+                    .Or(parser.ReferenceRule(RuleName.And),
+                        parser.ReferenceRule(RuleName.SimpleExpression)));
 
             parser.DefineRule(RuleName.Token,
-                new NameRule(RuleName.Identifier)
-                    .And(new NameRule(RuleName.Equals),
-                        new NameRule(RuleName.Literal),
-                        new NameRule(RuleName.Semicolon)));
+                parser.ReferenceRule(RuleName.Identifier)
+                    .And(parser.ReferenceRule(RuleName.Equals),
+                        parser.ReferenceRule(RuleName.Literal),
+                        parser.ReferenceRule(RuleName.Semicolon)));
 
             parser.DefineRule(RuleName.Rule,
-                new NameRule(RuleName.Identifier)
-                    .And(new NameRule(RuleName.Equals),
-                        new NameRule(RuleName.Expression),
-                        new NameRule(RuleName.Semicolon)));
+                parser.ReferenceRule(RuleName.Identifier)
+                    .And(parser.ReferenceRule(RuleName.Equals),
+                        parser.ReferenceRule(RuleName.Expression),
+                        parser.ReferenceRule(RuleName.Semicolon)));
 
             parser.DefineRule(RuleName.Root,
-                new RepeatRule(new NameRule(RuleName.Token)
-                    .Or(new NameRule(RuleName.Rule))));
+                new RepeatRule(parser.CompatibilityGuid, parser.ReferenceRule(RuleName.Token)
+                    .Or(parser.ReferenceRule(RuleName.Rule))));
 
             parser.AttachAction(RuleName.Whitespace, RuleActions.Whitespace);
 
@@ -126,6 +126,8 @@ namespace PseudoEBNF
                 result.SetImplicit(name);
             }
 
+            parser.Lock();
+
             var semantics = parser.Parse(grammar);
 
             var root = (BranchSemanticNode)semantics;
@@ -147,7 +149,7 @@ namespace PseudoEBNF
                     switch ((EbnfNodeType)leaf.NodeType)
                     {
                         case EbnfNodeType.Identifier:
-                            result.DefineRule(name, new NameRule(leaf.Value));
+                            result.DefineRule(name, result.ReferenceRule(leaf.Value));
                             break;
                         case EbnfNodeType.String:
                             result.DefineString(name, leaf.Value);
@@ -186,20 +188,20 @@ namespace PseudoEBNF
                         rule = Interpret(result, branch.Children[0]);
                         break;
                     case EbnfNodeType.Repeat:
-                        rule = new RepeatRule(Interpret(result, branch.Children[0]));
+                        rule = new RepeatRule(result.CompatibilityGuid, Interpret(result, branch.Children[0]));
                         break;
                     case EbnfNodeType.Optional:
-                        rule = new OptionalRule(Interpret(result, branch.Children[0]));
+                        rule = new OptionalRule(result.CompatibilityGuid, Interpret(result, branch.Children[0]));
                         break;
                     case EbnfNodeType.Not:
-                        rule = new NotRule(Interpret(result, branch.Children[0]));
+                        rule = new NotRule(result.CompatibilityGuid, Interpret(result, branch.Children[0]));
                         break;
 
                     case EbnfNodeType.And:
-                        rule = new AndRule(branch.Children.Select(child => Interpret(result, child)));
+                        rule = new AndRule(result.CompatibilityGuid, branch.Children.Select(child => Interpret(result, child)));
                         break;
                     case EbnfNodeType.Or:
-                        rule = new OrRule(branch.Children.Select(child => Interpret(result, child)));
+                        rule = new OrRule(result.CompatibilityGuid, branch.Children.Select(child => Interpret(result, child)));
                         break;
 
                     case EbnfNodeType.None:
@@ -218,7 +220,7 @@ namespace PseudoEBNF
                 switch ((EbnfNodeType)leaf.NodeType)
                 {
                     case EbnfNodeType.Identifier:
-                        rule = new NameRule(leaf.Value);
+                        rule = result.ReferenceRule(leaf.Value);
                         break;
 
                     case EbnfNodeType.String:

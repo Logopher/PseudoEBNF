@@ -1,30 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using PseudoEBNF.Common;
+﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Reporting;
-using PseudoEBNF.Semantics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
     public class RepeatRule : IRule
     {
-        IRule rule;
+        public Guid CompatibilityGuid { get; }
 
-        public RepeatRule(IRule rule)
+        public IRule Rule { get; }
+
+        public Supervisor Super { get; }
+
+        public Grammar Grammar { get; }
+
+        public RepeatRule(Guid compatibilityGuid, IRule rule)
         {
-            this.rule = rule;
+            CompatibilityGuid = compatibilityGuid;
+
+            if (rule.CompatibilityGuid != compatibilityGuid)
+            { throw new Exception(); }
+
+            Rule = rule;
         }
 
         public IRule Clone()
         {
-            return new RepeatRule(rule.Clone());
+            return new RepeatRule(CompatibilityGuid, Rule.Clone());
         }
 
-        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var index = 0;
             var list = lexemes.ToList();
@@ -32,7 +41,7 @@ namespace PseudoEBNF.Parsing.Rules
 
             while (index < lexemes.Count)
             {
-                var match = rule.Match(super, grammar, list.GetRange(index, list.Count - index));
+                var match = Rule.Match(list.GetRange(index, list.Count - index));
                 if (match.Success)
                 {
                     results.Add(match.Result);

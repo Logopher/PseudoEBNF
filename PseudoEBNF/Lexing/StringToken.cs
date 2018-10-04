@@ -6,21 +6,24 @@ namespace PseudoEBNF.Lexing
 {
     public class StringToken : IToken, IEquatable<StringToken>
     {
+        public Guid CompatibilityGuid { get; }
+
         public Guid Guid { get; }
 
         public string Name { get; }
 
         public string Text { get; }
 
-        StringToken(Guid guid, string name, string text)
+        StringToken(Guid compatibilityGuid, Guid guid, string name, string text)
         {
+            CompatibilityGuid = compatibilityGuid;
             Guid = guid;
             Name = name;
             Text = text;
         }
 
-        public StringToken(string name, string text)
-            : this(Guid.NewGuid(), name, text)
+        public StringToken(Guid compatibilityGuid, string name, string text)
+            : this(compatibilityGuid, Guid.NewGuid(), name, text)
         {
         }
 
@@ -33,7 +36,7 @@ namespace PseudoEBNF.Lexing
         {
             if (input.Substring(index).StartsWith(Text))
             {
-                return new Match<Lexeme>(new Lexeme(this, Text, index), true);
+                return new Match<Lexeme>(new Lexeme(CompatibilityGuid, this, Text, index), true);
             }
             else
             {

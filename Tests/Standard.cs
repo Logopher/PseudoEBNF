@@ -1,4 +1,7 @@
 ﻿using PseudoEBNF;
+using PseudoEBNF.JavaScript;
+using PseudoEBNF.Parsing.Nodes;
+using System;
 
 namespace Tests
 {
@@ -8,24 +11,24 @@ namespace Tests
 document.getElementById('demo').innerHTML = Date()
 ";
 
-        public static LexemeList Lexemes { get; }
-
-        public static IParser Parser { get; }
-
-        static Standard()
+        public static IParser GetParser ()
         {
-            Parser = new PseudoEBNF.JavaScript.Parser();
+            return JavaScriptDefinition.Parser();
+        }
 
-            {
-                var ident = Parser.GetToken("ident");
-                var singleString = Parser.GetToken("singleString");
-                var ws = Parser.GetToken("ws");
-                var dot = Parser.GetToken("dot");
-                var leftParen = Parser.GetToken("leftParen");
-                var rightParen = Parser.GetToken("rightParen");
-                var equals = Parser.GetToken("equals");
+        public static LexemeList GetLexemes(IParser parser = null)
+        {
+            parser = parser ?? GetParser();
 
-                Lexemes = new LexemeList
+            var ident = parser.GetToken("ident");
+            var singleString = parser.GetToken("singleString");
+            var ws = parser.GetToken("ws");
+            var dot = parser.GetToken("dot");
+            var leftParen = parser.GetToken("leftParen");
+            var rightParen = parser.GetToken("rightParen");
+            var equals = parser.GetToken("equals");
+
+            var results = new LexemeList(parser.CompatibilityGuid)
                 {
                     { ws, @"
 ", 0 },
@@ -46,22 +49,28 @@ document.getElementById('demo').innerHTML = Date()
                     { ws, @"
 ", 52 },
                 };
-            }
 
-            {
-                var dot = Parser.GetRule("dot");
-                var leftParen = Parser.GetRule("leftParen");
-                var rightParen = Parser.GetRule("rightParen");
-                var equals = Parser.GetRule("equals");
-                var ident = Parser.GetRule("ident");
-                var singleString = Parser.GetRule("singleString");
+            return results;
+        }
 
-                var root = Parser.GetRule("root");
-                var statement = Parser.GetRule("statement");
-                var assignment = Parser.GetRule("assignment");
-                var property = Parser.GetRule("property");
-                var functionCall = Parser.GetRule("functionCall");
-            }
+        public static BranchParseNode GetParseTree()
+        {
+            var parser = GetParser();
+
+            var dot = parser.GetRule("dot");
+            var leftParen = parser.GetRule("leftParen");
+            var rightParen = parser.GetRule("rightParen");
+            var equals = parser.GetRule("equals");
+            var ident = parser.GetRule("ident");
+            var singleString = parser.GetRule("singleString");
+
+            var root = parser.GetRule("root");
+            var statement = parser.GetRule("statement");
+            var assignment = parser.GetRule("assignment");
+            var property = parser.GetRule("property");
+            var functionCall = parser.GetRule("functionCall");
+
+            throw new NotImplementedException();
         }
     }
 }

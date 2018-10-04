@@ -1,4 +1,5 @@
 ﻿using PseudoEBNF.Common;
+using PseudoEBNF.Reporting;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -7,27 +8,30 @@ namespace PseudoEBNF.Lexing
 {
     public class RegexToken : IToken, IEquatable<RegexToken>
     {
+        public Guid CompatibilityGuid { get; }
+
         public Guid Guid { get; }
 
         public string Name { get; }
 
         public Regex Regex { get; }
 
-        RegexToken(Guid guid, string name, Regex regex)
+        RegexToken(Guid compatibilityGuid, Guid guid, string name, Regex regex)
         {
+            CompatibilityGuid = compatibilityGuid;
             Guid = guid;
             Name = name;
             Regex = regex;
         }
 
-        public RegexToken(string name, string pattern)
-            : this(Guid.NewGuid(), name, new Regex($@"\G{pattern}", RegexOptions.Compiled))
+        public RegexToken(Guid compatibilityGuid, string name, string pattern)
+            : this(compatibilityGuid, Guid.NewGuid(), name, new Regex($@"\G{pattern}", RegexOptions.Compiled))
         {
         }
 
         public IToken Clone()
         {
-            return new RegexToken(Guid, Name, Regex);
+            return new RegexToken(CompatibilityGuid, Guid, Name, Regex);
         }
 
         public Match<Lexeme> Match(string input, int index)
@@ -35,7 +39,7 @@ namespace PseudoEBNF.Lexing
             var match = Regex.Match(input, index);
             if (match.Success)
             {
-                return new Match<Lexeme>(new Lexeme(this, match.Groups[0].Value, index), true);
+                return new Match<Lexeme>(new Lexeme(CompatibilityGuid, this, match.Groups[0].Value, index), true);
             }
             else
             {

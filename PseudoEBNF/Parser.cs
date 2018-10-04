@@ -12,45 +12,81 @@ namespace PseudoEBNF
 {
     public class Parser : IParser
     {
-        readonly Supervisor super = new Supervisor();
-        readonly Grammar grammar = new Grammar();
+        public Guid CompatibilityGuid { get; }
+        public Supervisor Super { get; }
+        public Grammar Grammar { get; }
+        public Lexer Lexer { get; }
+
+        public bool IsLocked => Grammar.IsLocked;
 
         public Parser()
         {
+            CompatibilityGuid = Guid.NewGuid();
+            Super = new Supervisor();
+            Grammar = new Grammar(CompatibilityGuid, Super);
+            Lexer = new Lexer(Super, Grammar);
+        }
+
+        public void Lock()
+        {
+            if(!IsLocked)
+            {
+                Grammar.Lock();
+
+
+            }
         }
 
         public void DefineRule(string name, IRule rule)
         {
-            grammar.DefineRule(name, rule);
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineRule(name, rule);
         }
 
         public void DefineString(string name, string value)
         {
-            grammar.DefineString(name, value);
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineString(name, value);
         }
 
         public void DefineRegex(string name, string value)
         {
-            grammar.DefineRegex(name, value);
+            if(IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineRegex(name, value);
         }
 
         public NamedRule GetRule(string name)
         {
-            return grammar.GetRule(name);
+            return Grammar.GetRule(name);
         }
 
         public IToken GetToken(string name)
         {
-            return grammar.GetToken(name);
+            return Grammar.GetToken(name);
+        }
+
+        internal NameRule ReferenceRule(string name)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            return new NameRule(CompatibilityGuid, Grammar, name);
         }
 
         public ISemanticNode Parse(string input)
         {
-            var grammar = ProduceGrammar();
+            if (!IsLocked)
+            { throw new Exception(); }
 
-            var lexemes = Lex(grammar, input);
+            var lexemes = Lex(input);
 
-            var parseTree = ParseSyntax(grammar, lexemes);
+            var parseTree = ParseSyntax(lexemes);
 
             var semanticTree = ParseSemantics(parseTree);
 
@@ -59,66 +95,57 @@ namespace PseudoEBNF
 
         public IParseNode ParseSyntax(string input)
         {
-            var grammar = ProduceGrammar();
+            if (!IsLocked)
+            { throw new Exception(); }
 
-            var lexemes = Lex(grammar, input);
+            var lexemes = Lex(input);
 
-            return ParseSyntax(grammar, lexemes);
+            return ParseSyntax(lexemes);
         }
 
         public IEnumerable<Lexeme> Lex(string input)
         {
-            var grammar = ProduceGrammar();
+            if (!IsLocked)
+            { throw new Exception(); }
 
-            return Lex(grammar, input);
+            return Lexer.Lex(Super, input);
         }
 
         public BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes)
         {
-            var grammar = ProduceGrammar();
+            if (!IsLocked)
+            { throw new Exception(); }
 
-            return ParseSyntax(grammar, lexemes);
+            var match = Grammar.RootRule.Match(lexemes.ToList());
+
+            return match.Success ? (BranchParseNode)match.Result : null;
         }
 
         public ISemanticNode ParseSemantics(BranchParseNode node)
         {
+            if (!IsLocked)
+            { throw new Exception(); }
+
             if (node.Rule is NamedRule named)
             { return named.Action(node, ParseSemantics); }
             else
             { throw new Exception(); }
         }
 
-        BranchParseNode ParseSyntax(Grammar grammar, IEnumerable<Lexeme> lexemes)
-        {
-            var match = grammar.RootRule.Match(super, grammar, lexemes.ToList());
-
-            return match.Success ? (BranchParseNode)match.Result : null;
-        }
-
-        Grammar ProduceGrammar()
-        {
-            var grammar = this.grammar.Clone();
-
-            grammar.Lock();
-
-            return grammar;
-        }
-
-        IEnumerable<Lexeme> Lex(Grammar grammar, string input)
-        {
-            var lexer = new Lexer(grammar);
-
-            return lexer.Lex(super, input);
-        }
-
         public void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
         {
-            grammar.AttachAction(name, action);
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.AttachAction(name, action);
         }
 
         public void SetImplicit(string name)
         {
-            grammar.SetImplicit(name);
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.SetImplicit(name);
         }
     }
 }

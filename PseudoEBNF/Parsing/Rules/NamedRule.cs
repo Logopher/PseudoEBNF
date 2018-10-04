@@ -11,44 +11,52 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class NamedRule : IRule
     {
+        public Guid CompatibilityGuid { get; }
+
         public string Name { get; }
 
         public IRule Rule { get; }
 
         public Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> Action { get; private set; } = DefaultAction;
 
-        public NamedRule(string name, IRule rule)
+        public Supervisor Super { get; }
+
+        public Grammar Grammar { get; }
+
+        public NamedRule(Guid compatibilityGuid, Supervisor super, string name, IRule rule)
         {
+            CompatibilityGuid = compatibilityGuid;
+
+            if (rule.CompatibilityGuid != compatibilityGuid)
+            { throw new Exception(); }
+
+            Super = super;
             Name = name;
             Rule = rule;
         }
 
-        NamedRule(string name, IRule rule, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
-            : this(name, rule)
+        public Match<IParseNode> Match(List<Lexeme> lexemes)
         {
-            AttachAction(action);
-        }
+            Super.ReportHypothesis(this, lexemes.FirstOrDefault()?.StartIndex);
 
-        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
-        {
-            super.ReportHypothesis(this, lexemes.FirstOrDefault()?.StartIndex);
-
-            var match = Rule.Match(super, grammar, lexemes);
+            var match = Rule.Match(lexemes);
             if (match.Success)
             {
-                super.ReportSuccess(this, match.Result.MatchedText);
+                Super.ReportSuccess(this, match.Result.MatchedText);
                 return new Match<IParseNode>(new BranchParseNode(this, new[] { match.Result }), true);
             }
             else
             {
-                super.ReportFailure(this);
+                Super.ReportFailure(this);
                 return new Match<IParseNode>(null, false);
             }
         }
 
         public IRule Clone()
         {
-            return new NamedRule(Name, Rule.Clone(), Action);
+            var result = new NamedRule(CompatibilityGuid, Super, Name, Rule.Clone());
+            result.AttachAction(Action);
+            return result;
         }
 
         public void AttachAction(Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)

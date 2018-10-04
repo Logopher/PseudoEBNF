@@ -11,10 +11,21 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class OrRule : IRule
     {
+        public Guid CompatibilityGuid { get; }
+
         public IList<IRule> Children { get; }
 
-        public OrRule(IEnumerable<IRule> rules)
+        public Supervisor Super { get; }
+
+        public Grammar Grammar { get; }
+
+        public OrRule(Guid compatibilityGuid, IEnumerable<IRule> rules)
         {
+            CompatibilityGuid = compatibilityGuid;
+            
+            if (rules.Any(r => r.CompatibilityGuid != compatibilityGuid))
+            { throw new Exception(); }
+
             Children = rules
                 .SelectMany(r =>
                 {
@@ -32,14 +43,14 @@ namespace PseudoEBNF.Parsing.Rules
 
         public IRule Clone()
         {
-            return new OrRule(Children.Select(n => n.Clone()));
+            return new OrRule(CompatibilityGuid, Children.Select(n => n.Clone()));
         }
 
-        public Match<IParseNode> Match(Supervisor super, Grammar grammar, List<Lexeme> lexemes)
+        public Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             foreach (var rule in Children)
             {
-                var match = rule.Match(super, grammar, lexemes);
+                var match = rule.Match(lexemes);
                 if (match.Success)
                 {
                     return new Match<IParseNode>(match.Result, true);
