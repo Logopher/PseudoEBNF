@@ -9,18 +9,18 @@ using System.Linq;
 
 namespace PseudoEBNF.Common
 {
-    public class Grammar:ICompatible
+    public class Grammar : Compatible
     {
         public Guid CompatibilityGuid { get; }
 
         Guid guid = Guid.NewGuid();
 
-        public IRule RootRule => GetRule(RuleName.Root);
+        public Rule RootRule => GetRule(RuleName.Root);
 
         public Supervisor Super { get; }
 
-        readonly Dictionary<string, IToken> tokens;
-        public IReadOnlyDictionary<string, IToken> Tokens => tokens;
+        readonly Dictionary<string, Token> tokens;
+        public IReadOnlyDictionary<string, Token> Tokens => tokens;
 
         readonly Dictionary<string, NamedRule> rules;
         public IReadOnlyDictionary<string, NamedRule> Rules => rules;
@@ -30,16 +30,17 @@ namespace PseudoEBNF.Common
 
         public bool IsLocked { get; private set; }
 
-        internal Grammar(Guid compatibilityGuid, Supervisor super)
+        internal Grammar(Compatible c, Supervisor super)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
             Super = super;
-            tokens = new Dictionary<string, IToken>();
+            tokens = new Dictionary<string, Token>();
             rules = new Dictionary<string, NamedRule>();
             implicitNames = new List<string>();
         }
 
-        Grammar(Dictionary<string, IToken> tokens, Dictionary<string, NamedRule> rules, List<string> implicitNames)
+        Grammar(Compatible c, Dictionary<string, Token> tokens, Dictionary<string, NamedRule> rules, List<string> implicitNames)
+            : base(c)
         {
             this.tokens = tokens;
             this.rules = rules;
@@ -49,6 +50,7 @@ namespace PseudoEBNF.Common
         public Grammar Clone()
         {
             return new Grammar(
+                this,
                 tokens.ToDictionary(p => p.Key, p => p.Value.Clone()),
                 rules.ToDictionary(p => p.Key, p => (NamedRule)p.Value.Clone()),
                 implicitNames.ToList());
@@ -56,8 +58,8 @@ namespace PseudoEBNF.Common
 
         public void Lock()
         {
-            DefineRule(RuleName.Implicit, new RepeatRule(CompatibilityGuid,
-                new OrRule(CompatibilityGuid, ImplicitNames
+            DefineRule(RuleName.Implicit, new RepeatRule(this,
+                new OrRule(this, ImplicitNames
                     .Select(GetRule)
                     .Where(r => r != null))));
 
@@ -66,7 +68,7 @@ namespace PseudoEBNF.Common
             IsLocked = true;
         }
 
-        public void DefineRule(string name, IRule rule)
+        public void DefineRule(string name, Rule rule)
         {
             if (IsLocked)
             {
@@ -75,10 +77,10 @@ namespace PseudoEBNF.Common
 
             if (name == RuleName.Root)
             {
-                rule = rule.And(new NameRule(CompatibilityGuid, this, RuleName.Implicit));
+                rule = rule.And(new NameRule(this, this, RuleName.Implicit));
             }
 
-            var named = new NamedRule(CompatibilityGuid, Super, name, rule);
+            var named = new NamedRule(this, Super, name, rule);
 
             rules.Add(name, named);
         }
@@ -89,9 +91,9 @@ namespace PseudoEBNF.Common
             return result;
         }
 
-        public IToken GetToken(string name)
+        public Token GetToken(string name)
         {
-            Tokens.TryGetValue(name, out IToken result);
+            Tokens.TryGetValue(name, out Token result);
             return result;
         }
 
@@ -112,15 +114,15 @@ namespace PseudoEBNF.Common
 
         public void DefineString(string name, string text)
         {
-            DefineToken(name, new StringToken(CompatibilityGuid, name, text));
+            DefineToken(name, new StringToken(this, name, text));
         }
 
         public void DefineRegex(string name, string pattern)
         {
-            DefineToken(name, new RegexToken(CompatibilityGuid, name, pattern));
+            DefineToken(name, new RegexToken(this, name, pattern));
         }
 
-        void DefineToken(string name, IToken token)
+        void DefineToken(string name, Token token)
         {
             if (IsLocked)
             {
@@ -129,10 +131,10 @@ namespace PseudoEBNF.Common
 
             tokens.Add(name, token);
 
-            IRule rule = new TokenRule(CompatibilityGuid, token);
+            Rule rule = new TokenRule(this, token);
             if (!ImplicitNames.Contains(name))
             {
-                rule = new NameRule(CompatibilityGuid, this, RuleName.Implicit).And(rule);
+                rule = new NameRule(this, this, RuleName.Implicit).And(rule);
             }
 
             DefineRule(name, rule);

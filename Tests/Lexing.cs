@@ -14,10 +14,10 @@ namespace Tests
         [TestMethod]
         public void ImplicitWhitespace()
         {
-            Parser parser;
+            LLParser parser;
             List<Lexeme> lexemes;
             
-            parser = new Parser();
+            parser = new LLParser();
             parser.SetImplicit(RuleName.Whitespace);
 
             parser.DefineRegex(RuleName.Identifier, @"\w+");
@@ -32,7 +32,7 @@ namespace Tests
                 parser.Lex("a b c").ToList();
             });
 
-            parser = new Parser();
+            parser = new LLParser();
             parser.SetImplicit(RuleName.Whitespace);
 
             parser.DefineRegex(RuleName.Identifier, @"\w+");
@@ -47,11 +47,11 @@ namespace Tests
         [TestMethod]
         public void ExplicitWhitespace()
         {
-            Parser parser;
+            LLParser parser;
 
             List<Lexeme> lexemes;
 
-            parser = new Parser();
+            parser = new LLParser();
 
             parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
 
@@ -65,7 +65,7 @@ namespace Tests
                 parser.Lex("a b c").ToList();
             });
 
-            parser = new Parser();
+            parser = new LLParser();
             
             parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
             parser.DefineRegex(RuleName.Whitespace, @"\s+");
@@ -82,7 +82,7 @@ namespace Tests
             var a = Standard.GetLexemes();
 
             var b = a
-                .Select(l => new Lexeme(l.CompatibilityGuid, l.Token, l.MatchedText, l.StartIndex))
+                .Select(l => new Lexeme(l, l.Token, l.MatchedText, l.StartIndex))
                 .ToList();
 
             Assert.IsTrue(a.Equals(b));

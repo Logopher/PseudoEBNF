@@ -10,11 +10,11 @@ namespace PseudoEBNF
 {
     public class ParserGenerator
     {
-        Parser parser;
+        LLParser parser;
 
         public ParserGenerator()
         {
-            parser = new Parser();
+            parser = new LLParser();
 
             parser.SetImplicit(RuleName.Whitespace);
             parser.SetImplicit(RuleName.LineComment);
@@ -89,7 +89,7 @@ namespace PseudoEBNF
                         parser.ReferenceRule(RuleName.Semicolon)));
 
             parser.DefineRule(RuleName.Root,
-                new RepeatRule(parser.CompatibilityGuid, parser.ReferenceRule(RuleName.Token)
+                new RepeatRule(parser, parser.ReferenceRule(RuleName.Token)
                     .Or(parser.ReferenceRule(RuleName.Rule))));
 
             parser.AttachAction(RuleName.Whitespace, RuleActions.Whitespace);
@@ -117,9 +117,9 @@ namespace PseudoEBNF
             parser.AttachAction(RuleName.SimpleExpression, RuleActions.Unwrap);
         }
 
-        public Parser SpawnParser(Parser parser, string grammar, params string[] implicitNames)
+        public LLParser SpawnParser(LLParser parser, string grammar, params string[] implicitNames)
         {
-            var result = new Parser();
+            var result = new LLParser();
 
             foreach (var name in implicitNames)
             {
@@ -171,14 +171,14 @@ namespace PseudoEBNF
             return result;
         }
 
-        public Parser SpawnParser(string grammar, params string[] implicitNames)
+        public LLParser SpawnParser(string grammar, params string[] implicitNames)
         {
             return SpawnParser(parser, grammar, implicitNames);
         }
 
-        private IRule Interpret(Parser result, ISemanticNode node)
+        private Rule Interpret(LLParser result, ISemanticNode node)
         {
-            IRule rule = null;
+            Rule rule = null;
 
             if (node is BranchSemanticNode branch)
             {
@@ -188,20 +188,20 @@ namespace PseudoEBNF
                         rule = Interpret(result, branch.Children[0]);
                         break;
                     case EbnfNodeType.Repeat:
-                        rule = new RepeatRule(result.CompatibilityGuid, Interpret(result, branch.Children[0]));
+                        rule = new RepeatRule(result, Interpret(result, branch.Children[0]));
                         break;
                     case EbnfNodeType.Optional:
-                        rule = new OptionalRule(result.CompatibilityGuid, Interpret(result, branch.Children[0]));
+                        rule = new OptionalRule(result, Interpret(result, branch.Children[0]));
                         break;
                     case EbnfNodeType.Not:
-                        rule = new NotRule(result.CompatibilityGuid, Interpret(result, branch.Children[0]));
+                        rule = new NotRule(result, Interpret(result, branch.Children[0]));
                         break;
 
                     case EbnfNodeType.And:
-                        rule = new AndRule(result.CompatibilityGuid, branch.Children.Select(child => Interpret(result, child)));
+                        rule = new AndRule(result, branch.Children.Select(child => Interpret(result, child)));
                         break;
                     case EbnfNodeType.Or:
-                        rule = new OrRule(result.CompatibilityGuid, branch.Children.Select(child => Interpret(result, child)));
+                        rule = new OrRule(result, branch.Children.Select(child => Interpret(result, child)));
                         break;
 
                     case EbnfNodeType.None:

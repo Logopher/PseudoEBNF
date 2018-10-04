@@ -8,32 +8,29 @@ using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class RepeatRule : IRule
+    public class RepeatRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
-
-        public IRule Rule { get; }
+        public Rule Rule { get; }
 
         public Supervisor Super { get; }
 
         public Grammar Grammar { get; }
 
-        public RepeatRule(Guid compatibilityGuid, IRule rule)
+        public RepeatRule(Compatible c, Rule rule)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-
-            if (rule.CompatibilityGuid != compatibilityGuid)
+            if (!IsCompatibleWith(rule))
             { throw new Exception(); }
 
             Rule = rule;
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            return new RepeatRule(CompatibilityGuid, Rule.Clone());
+            return new RepeatRule(this, Rule.Clone());
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var index = 0;
             var list = lexemes.ToList();

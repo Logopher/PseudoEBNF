@@ -7,14 +7,14 @@ namespace PseudoEBNF.Common
 {
     public static class Extensions
     {
-        public static AndRule And(this IRule rule, IRule first, params IRule[] rest)
+        public static AndRule And(this Rule rule, Rule first, params Rule[] rest)
         {
-            return new AndRule(rule.CompatibilityGuid, new[] { rule, first }.Concat(rest));
+            return new AndRule(rule, new[] { rule, first }.Concat(rest));
         }
 
-        public static OrRule Or(this IRule rule, IRule first, params IRule[] rest)
+        public static OrRule Or(this Rule rule, Rule first, params Rule[] rest)
         {
-            return new OrRule(rule.CompatibilityGuid, new[] { rule, first }.Concat(rest));
+            return new OrRule(rule, new[] { rule, first }.Concat(rest));
         }
 
         public static Dictionary<K, V> Merge<K, V>(this IDictionary<K, V> self, DictionaryMergeCollisionBehavior collisionBehavior, IEnumerable<IDictionary<K, V>> rest)

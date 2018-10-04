@@ -9,7 +9,7 @@ namespace PseudoEBNF.JavaScript
 {
     public static class JavaScriptDefinition
     {
-        public static IParser Parser()
+        public static Parser Parser()
         {
             var grammar = $@"
 functionKeyword = /(?<!\w)function(?!\w)/;

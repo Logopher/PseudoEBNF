@@ -6,26 +6,24 @@ using System.Linq;
 
 namespace PseudoEBNF.Lexing
 {
-    public class Lexer : ICompatible
+    public class Lexer : Compatible
     {
-        public Guid CompatibilityGuid { get; }
-
         public Supervisor Super { get; }
 
         public Grammar Grammar { get; }
 
         public Lexer(Supervisor super, Grammar grammar)
+            : base(grammar)
         {
-            CompatibilityGuid = grammar.CompatibilityGuid;
             Super = super;
             Grammar = grammar;
         }
 
         public Lexer()
+            : base(Guid.NewGuid())
         {
-            CompatibilityGuid = Guid.NewGuid();
             Super = new Supervisor();
-            Grammar = new Grammar(CompatibilityGuid, Super);
+            Grammar = new Grammar(this, Super);
         }
 
         public void SetImplicit(string name)
@@ -98,9 +96,9 @@ namespace PseudoEBNF.Lexing
             return results;
         }
 
-        public IToken GetToken(string name)
+        public Token GetToken(string name)
         {
-            if (Grammar.Tokens.TryGetValue(name, out IToken token))
+            if (Grammar.Tokens.TryGetValue(name, out Token token))
             {
                 return token;
             }

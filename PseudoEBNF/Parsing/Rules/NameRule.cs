@@ -1,29 +1,25 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Reporting;
 using System;
 using System.Collections.Generic;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class NameRule : IRule
+    public class NameRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
-
         public string Name { get; }
 
         public Grammar Grammar { get; }
 
-        public IRule Rule => Grammar.GetRule(Name);
+        public Rule Rule => Grammar.GetRule(Name);
 
-        public NameRule(Guid compatibilityGuid, Grammar grammar, string name)
+        public NameRule(Compatible c, Grammar grammar, string name)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-
-            if (grammar.CompatibilityGuid != compatibilityGuid)
+            if (!IsCompatibleWith(grammar))
             { throw new Exception(); }
-            
+
             Grammar = grammar;
 
             if (name == RuleName.Root)
@@ -34,12 +30,12 @@ namespace PseudoEBNF.Parsing.Rules
             Name = name;
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            return new NameRule(CompatibilityGuid, Grammar, Name);
+            return new NameRule(this, Grammar, Name);
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var rule = Grammar.GetRule(Name);
 

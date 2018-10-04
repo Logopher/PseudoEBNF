@@ -3,26 +3,31 @@ using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Semantics;
+using System;
 using System.Collections.Generic;
 
 namespace PseudoEBNF
 {
-    public interface IParser : ICompatible
+    public abstract class Parser : Compatible
     {
-        void Lock();
+        public Parser()
+            : base(Guid.NewGuid())
+        { }
 
-        ISemanticNode Parse(string input);
+        public abstract void Lock();
 
-        NamedRule GetRule(string name);
+        public abstract ISemanticNode Parse(string input);
 
-        IToken GetToken(string name);
+        public abstract NamedRule GetRule(string name);
 
-        IParseNode ParseSyntax(string input);
+        public abstract Token GetToken(string name);
 
-        IEnumerable<Lexeme> Lex(string input);
+        public abstract IParseNode ParseSyntax(string input);
 
-        BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes);
+        public abstract IEnumerable<Lexeme> Lex(string input);
 
-        ISemanticNode ParseSemantics(BranchParseNode node);
+        public abstract BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes);
+
+        public abstract ISemanticNode ParseSemantics(BranchParseNode node);
     }
 }

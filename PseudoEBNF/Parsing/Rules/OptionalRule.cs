@@ -7,34 +7,30 @@ using System.Collections.Generic;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class OptionalRule : IRule
+    public class OptionalRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
-
-        public IRule Rule { get; }
+        public Rule Rule { get; }
 
         public Supervisor Super { get; }
 
         public Grammar Grammar { get; }
 
-        public OptionalRule(Guid compatibilityGuid, IRule rule)
+        public OptionalRule(Compatible c, Rule rule)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-
-            if (rule.CompatibilityGuid != compatibilityGuid)
+            if (!IsCompatibleWith(rule))
             { throw new Exception(); }
 
             Rule = rule;
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            return new OptionalRule(CompatibilityGuid, Rule.Clone());
+            return new OptionalRule(this, Rule.Clone());
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
-
             var match = Rule.Match(lexemes);
             var results = match.Success ? new[] { match.Result } : new IParseNode[0];
 

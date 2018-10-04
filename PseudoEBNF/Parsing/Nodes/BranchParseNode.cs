@@ -12,7 +12,7 @@ namespace PseudoEBNF.Parsing.Nodes
         public IReadOnlyList<BranchParseNode> _elements;
         private IReadOnlyList<BranchParseNode> _branches;
 
-        public IRule Rule { get; }
+        public Rule Rule { get; }
         public string MatchedText { get; }
         public int Length { get; }
         public int LexemeCount { get; }
@@ -22,12 +22,12 @@ namespace PseudoEBNF.Parsing.Nodes
         public IReadOnlyList<BranchParseNode> Branches => !IsTwig ? _branches : throw new Exception();
         public IReadOnlyList<BranchParseNode> Elements => !IsTwig ? _elements : throw new Exception();
 
-        public BranchParseNode(IRule rule, params IParseNode[] nodes)
+        public BranchParseNode(Rule rule, params IParseNode[] nodes)
             : this(rule, (IEnumerable<IParseNode>)nodes)
         {
         }
 
-        public BranchParseNode(IRule rule, IEnumerable<IParseNode> nodes)
+        public BranchParseNode(Rule rule, IEnumerable<IParseNode> nodes)
         {
             Rule = rule;
             var children = nodes.ToList();

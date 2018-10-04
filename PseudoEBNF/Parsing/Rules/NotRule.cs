@@ -1,40 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using PseudoEBNF.Common;
+﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Reporting;
-using PseudoEBNF.Semantics;
+using System;
+using System.Collections.Generic;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class NotRule : IRule
+    public class NotRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
-
-        public IRule Rule { get; }
+        public Rule Rule { get; }
 
         public Supervisor Super { get; }
 
         public Grammar Grammar { get; }
 
-        public NotRule(Guid compatibilityGuid, IRule rule)
+        public NotRule(Compatible c, Rule rule)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-
-            if (rule.CompatibilityGuid != compatibilityGuid)
+            if (!IsCompatibleWith(rule))
             { throw new Exception(); }
 
             Rule = rule;
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            return new NotRule(CompatibilityGuid, Rule.Clone());
+            return new NotRule(this, Rule.Clone());
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var match = Rule.Match(lexemes);
             if (match.Success)

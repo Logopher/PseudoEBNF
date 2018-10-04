@@ -9,13 +9,11 @@ using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class NamedRule : IRule
+    public class NamedRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
-
         public string Name { get; }
 
-        public IRule Rule { get; }
+        public Rule Rule { get; }
 
         public Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> Action { get; private set; } = DefaultAction;
 
@@ -23,11 +21,10 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Grammar Grammar { get; }
 
-        public NamedRule(Guid compatibilityGuid, Supervisor super, string name, IRule rule)
+        public NamedRule(Compatible c, Supervisor super, string name, Rule rule)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-
-            if (rule.CompatibilityGuid != compatibilityGuid)
+            if (!IsCompatibleWith(rule))
             { throw new Exception(); }
 
             Super = super;
@@ -35,7 +32,7 @@ namespace PseudoEBNF.Parsing.Rules
             Rule = rule;
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             Super.ReportHypothesis(this, lexemes.FirstOrDefault()?.StartIndex);
 
@@ -52,9 +49,9 @@ namespace PseudoEBNF.Parsing.Rules
             }
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            var result = new NamedRule(CompatibilityGuid, Super, Name, Rule.Clone());
+            var result = new NamedRule(this, Super, Name, Rule.Clone());
             result.AttachAction(Action);
             return result;
         }

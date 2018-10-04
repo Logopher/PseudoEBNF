@@ -65,17 +65,17 @@ namespace PseudoEBNF.Reporting
             }
         }
 
-        internal void ReportHypothesis(IToken token, int? index)
+        internal void ReportHypothesis(Token token, int? index)
         {
             WriteLine($"? {token.Name}", index ?? -1);
         }
 
-        public void ReportFailure(IToken token)
+        public void ReportFailure(Token token)
         {
 
         }
 
-        public void ReportSuccess(IToken token, string text)
+        public void ReportSuccess(Token token, string text)
         {
             WriteLine($@"+ {token.Name}
 {text}");

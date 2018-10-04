@@ -7,17 +7,14 @@ using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class AndRule : IRule
+    public class AndRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
+        public IList<Rule> Children { get; }
 
-        public IList<IRule> Children { get; }
-
-        public AndRule(Guid compatibilityGuid, IEnumerable<IRule> rules)
+        public AndRule(Compatible c, IEnumerable<Rule> rules)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-
-            if (rules.Any(r => r.CompatibilityGuid != compatibilityGuid))
+            if (rules.Any(r => !IsCompatibleWith(r)))
             { throw new Exception(); }
 
             Children = rules
@@ -35,12 +32,12 @@ namespace PseudoEBNF.Parsing.Rules
                 .ToList();
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            return new AndRule(CompatibilityGuid, Children.Select(n => n.Clone()));
+            return new AndRule(this, Children.Select(n => n.Clone()));
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var index = 0;
             var results = new List<IParseNode>();

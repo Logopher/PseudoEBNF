@@ -3,14 +3,20 @@ using System;
 
 namespace PseudoEBNF.Lexing
 {
-    public interface IToken : IEquatable<IToken>, ICompatible
+    public abstract class Token : Compatible, IEquatable<Token>
     {
-        Guid Guid { get; }
+        public Token(Compatible c)
+            : base(c)
+        {}
 
-        string Name { get; }
+        public abstract Guid Guid { get; }
 
-        Match<Lexeme> Match(string input, int index);
+        public abstract string Name { get; }
 
-        IToken Clone();
+        public abstract Match<Lexeme> Match(string input, int index);
+
+        public abstract Token Clone();
+
+        public abstract bool Equals(Token other);
     }
 }

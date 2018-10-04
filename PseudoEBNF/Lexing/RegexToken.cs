@@ -1,45 +1,41 @@
 ﻿using PseudoEBNF.Common;
-using PseudoEBNF.Reporting;
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace PseudoEBNF.Lexing
 {
-    public class RegexToken : IToken, IEquatable<RegexToken>
+    public class RegexToken : Token, IEquatable<RegexToken>
     {
-        public Guid CompatibilityGuid { get; }
+        public override Guid Guid { get; }
 
-        public Guid Guid { get; }
-
-        public string Name { get; }
+        public override string Name { get; }
 
         public Regex Regex { get; }
 
-        RegexToken(Guid compatibilityGuid, Guid guid, string name, Regex regex)
+        RegexToken(Compatible c, Guid guid, string name, Regex regex)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
             Guid = guid;
             Name = name;
             Regex = regex;
         }
 
-        public RegexToken(Guid compatibilityGuid, string name, string pattern)
-            : this(compatibilityGuid, Guid.NewGuid(), name, new Regex($@"\G{pattern}", RegexOptions.Compiled))
+        public RegexToken(Compatible c, string name, string pattern)
+            : this(c, Guid.NewGuid(), name, new Regex($@"\G{pattern}", RegexOptions.Compiled))
         {
         }
 
-        public IToken Clone()
+        public override Token Clone()
         {
-            return new RegexToken(CompatibilityGuid, Guid, Name, Regex);
+            return new RegexToken(this, Guid, Name, Regex);
         }
 
-        public Match<Lexeme> Match(string input, int index)
+        public override Match<Lexeme> Match(string input, int index)
         {
             var match = Regex.Match(input, index);
             if (match.Success)
             {
-                return new Match<Lexeme>(new Lexeme(CompatibilityGuid, this, match.Groups[0].Value, index), true);
+                return new Match<Lexeme>(new Lexeme(this, this, match.Groups[0].Value, index), true);
             }
             else
             {
@@ -52,9 +48,9 @@ namespace PseudoEBNF.Lexing
             return Guid == other.Guid;
         }
 
-        public bool Equals(IToken other)
+        public override bool Equals(Token other)
         {
-            if(!(other is RegexToken regTok))
+            if (!(other is RegexToken regTok))
             { return false; }
 
             return Equals(regTok);

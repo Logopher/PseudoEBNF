@@ -1,29 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using PseudoEBNF.Common;
+﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Reporting;
-using PseudoEBNF.Semantics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class OrRule : IRule
+    public class OrRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
-
-        public IList<IRule> Children { get; }
+        public IList<Rule> Children { get; }
 
         public Supervisor Super { get; }
 
         public Grammar Grammar { get; }
 
-        public OrRule(Guid compatibilityGuid, IEnumerable<IRule> rules)
+        public OrRule(Compatible c, IEnumerable<Rule> rules)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-            
-            if (rules.Any(r => r.CompatibilityGuid != compatibilityGuid))
+            if (rules.Any(r => !IsCompatibleWith(r)))
             { throw new Exception(); }
 
             Children = rules
@@ -41,12 +37,12 @@ namespace PseudoEBNF.Parsing.Rules
                 .ToList();
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            return new OrRule(CompatibilityGuid, Children.Select(n => n.Clone()));
+            return new OrRule(this, Children.Select(n => n.Clone()));
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             foreach (var rule in Children)
             {

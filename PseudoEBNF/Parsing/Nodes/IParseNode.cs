@@ -7,7 +7,7 @@ namespace PseudoEBNF.Parsing.Nodes
 {
     public interface IParseNode
     {
-        IRule Rule { get; }
+        Rule Rule { get; }
 
         string MatchedText { get; }
 

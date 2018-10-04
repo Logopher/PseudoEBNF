@@ -9,17 +9,15 @@ namespace Tests
 {
 #pragma warning disable CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
 #pragma warning disable CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
-    internal class LexemeList : IList<Lexeme>, IEquatable<IEnumerable<Lexeme>>, ICompatible
+    internal class LexemeList : Compatible, IList<Lexeme>, IEquatable<IEnumerable<Lexeme>>
 #pragma warning restore CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
 #pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
     {
-        public Guid CompatibilityGuid { get; }
-
         readonly List<Lexeme> data = new List<Lexeme>();
 
-        public LexemeList(Guid compatibilityGuid)
+        public LexemeList(Compatible c)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
         }
 
         public Lexeme this[int index]
@@ -34,15 +32,15 @@ namespace Tests
 
         public void Add(Lexeme item)
         {
-            if(item.CompatibilityGuid != CompatibilityGuid)
+            if (item.CompatibilityGuid != CompatibilityGuid)
             { throw new Exception(); }
 
             data.Add(item);
         }
 
-        public void Add(IToken token, string text, int index)
+        public void Add(Token token, string text, int index)
         {
-            Add(new Lexeme(token.CompatibilityGuid, token, text, index));
+            Add(new Lexeme(this, token, text, index));
         }
 
         public void Clear()
@@ -107,7 +105,7 @@ namespace Tests
         {
             var list = other as IList<Lexeme> ?? other.ToList();
 
-            if(list is LexemeList lexemeList && lexemeList.CompatibilityGuid != CompatibilityGuid)
+            if (list is LexemeList lexemeList && lexemeList.CompatibilityGuid != CompatibilityGuid)
             { throw new Exception(); }
 
             return Count == list.Count

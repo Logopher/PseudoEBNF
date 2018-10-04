@@ -11,12 +11,12 @@ namespace Tests
 document.getElementById('demo').innerHTML = Date()
 ";
 
-        public static IParser GetParser ()
+        public static Parser GetParser ()
         {
             return JavaScriptDefinition.Parser();
         }
 
-        public static LexemeList GetLexemes(IParser parser = null)
+        public static LexemeList GetLexemes(Parser parser = null)
         {
             parser = parser ?? GetParser();
 
@@ -28,7 +28,7 @@ document.getElementById('demo').innerHTML = Date()
             var rightParen = parser.GetToken("rightParen");
             var equals = parser.GetToken("equals");
 
-            var results = new LexemeList(parser.CompatibilityGuid)
+            var results = new LexemeList(parser)
                 {
                     { ws, @"
 ", 0 },

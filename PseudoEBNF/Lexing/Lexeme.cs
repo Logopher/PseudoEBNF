@@ -1,14 +1,11 @@
 ﻿using PseudoEBNF.Common;
 using System;
-using System.Collections.Generic;
 
 namespace PseudoEBNF.Lexing
 {
-    public class Lexeme : IEquatable<Lexeme>, ICompatible
+    public class Lexeme : Compatible, IEquatable<Lexeme>
     {
-        public Guid CompatibilityGuid { get; }
-
-        public IToken Token { get; }
+        public Token Token { get; }
 
         public string MatchedText { get; }
 
@@ -16,11 +13,10 @@ namespace PseudoEBNF.Lexing
 
         public int Length => MatchedText.Length;
 
-        public Lexeme(Guid compatibilityGuid, IToken token, string matchedText, int index)
+        public Lexeme(Compatible c, Token token, string matchedText, int index)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-
-            if(token.CompatibilityGuid != compatibilityGuid)
+            if (!IsCompatibleWith(token))
             { throw new Exception(); }
 
             Token = token ?? throw new Exception();

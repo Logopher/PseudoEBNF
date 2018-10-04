@@ -8,32 +8,29 @@ using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public class TokenRule : IRule
+    public class TokenRule : Rule
     {
-        public Guid CompatibilityGuid { get; }
-
-        public IToken Token { get; }
+        public Token Token { get; }
 
         public Supervisor Super { get; }
 
         public Grammar Grammar { get; }
 
-        public TokenRule(Guid compatibilityGuid, IToken token)
+        public TokenRule(Compatible c, Token token)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
-            
-            if (token.CompatibilityGuid != compatibilityGuid)
+            if (!IsCompatibleWith(token))
             { throw new Exception(); }
 
             Token = token;
         }
 
-        public IRule Clone()
+        public override Rule Clone()
         {
-            return new TokenRule(CompatibilityGuid, Token.Clone());
+            return new TokenRule(this, Token.Clone());
         }
 
-        public Match<IParseNode> Match(List<Lexeme> lexemes)
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var first = lexemes.FirstOrDefault();
             if (first?.Token.Guid == Token.Guid)

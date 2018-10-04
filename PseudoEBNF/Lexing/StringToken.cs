@@ -1,42 +1,39 @@
 ﻿using PseudoEBNF.Common;
 using System;
-using System.Collections.Generic;
 
 namespace PseudoEBNF.Lexing
 {
-    public class StringToken : IToken, IEquatable<StringToken>
+    public class StringToken : Token, IEquatable<StringToken>
     {
-        public Guid CompatibilityGuid { get; }
+        public override Guid Guid { get; }
 
-        public Guid Guid { get; }
-
-        public string Name { get; }
+        public override string Name { get; }
 
         public string Text { get; }
 
-        StringToken(Guid compatibilityGuid, Guid guid, string name, string text)
+        StringToken(Compatible c, Guid guid, string name, string text)
+            : base(c)
         {
-            CompatibilityGuid = compatibilityGuid;
             Guid = guid;
             Name = name;
             Text = text;
         }
 
-        public StringToken(Guid compatibilityGuid, string name, string text)
-            : this(compatibilityGuid, Guid.NewGuid(), name, text)
+        public StringToken(Compatible c, string name, string text)
+            : this(c, Guid.NewGuid(), name, text)
         {
         }
 
-        public IToken Clone()
+        public override Token Clone()
         {
-            return new StringToken(Guid, Name, Text);
+            return new StringToken(this, Guid, Name, Text);
         }
 
-        public Match<Lexeme> Match(string input, int index)
+        public override Match<Lexeme> Match(string input, int index)
         {
             if (input.Substring(index).StartsWith(Text))
             {
-                return new Match<Lexeme>(new Lexeme(CompatibilityGuid, this, Text, index), true);
+                return new Match<Lexeme>(new Lexeme(this, this, Text, index), true);
             }
             else
             {
@@ -52,7 +49,7 @@ namespace PseudoEBNF.Lexing
             return Equals(strTok);
         }
 
-        public bool Equals(IToken other)
+        public override bool Equals(Token other)
         {
             if (!(other is StringToken str))
             { return false; }
@@ -72,7 +69,7 @@ namespace PseudoEBNF.Lexing
 
         public static bool operator ==(StringToken a, StringToken b)
         {
-            if(ReferenceEquals(a, null))
+            if (ReferenceEquals(a, null))
             { return false; }
 
             return a.Equals(b);

@@ -5,9 +5,14 @@ using System.Collections.Generic;
 
 namespace PseudoEBNF.Parsing.Rules
 {
-    public interface IRule : ICompatible
+    public abstract class Rule : Compatible
     {
-        Match<IParseNode> Match(List<Lexeme> lexemes);
-        IRule Clone();
+        public Rule(Compatible c)
+            : base(c)
+        {
+        }
+
+        public abstract Match<IParseNode> Match(List<Lexeme> lexemes);
+        public abstract Rule Clone();
     }
 }
