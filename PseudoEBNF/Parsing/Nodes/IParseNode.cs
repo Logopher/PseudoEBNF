@@ -14,5 +14,6 @@ namespace PseudoEBNF.Parsing.Nodes
         int Length { get; }
 
         int LexemeCount { get; }
+        int StartIndex { get; }
     }
 }

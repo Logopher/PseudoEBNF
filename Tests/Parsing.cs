@@ -21,6 +21,33 @@ namespace Tests
         }
 
         [TestMethod]
+        public void SingleToken()
+        {
+            var grammar = $@"
+abc = ""abc"";
+
+root = abc;
+";
+            var parser = parserGen.SpawnParser(grammar);
+
+            parser.AttachAction("abc", (branch, recurse) =>
+            {
+                var value = branch.Leaf.MatchedText;
+
+                return new LeafSemanticNode(0, value);
+            });
+
+            parser.AttachAction("root", (branch, recurse) =>
+            {
+                return recurse(branch.GetDescendant(0));
+            });
+
+            parser.Lock();
+
+            var result = parser.Parse("abc");
+        }
+
+        [TestMethod]
         public void ImplicitWhitespace()
         {
             var grammar = $@"
@@ -119,6 +146,7 @@ namespace Tests
             parser.ToString();
         }
 
+        /*
         [TestMethod]
         public void ParseSyntax()
         {
@@ -134,6 +162,7 @@ namespace Tests
             Assert.AreEqual("'demo'", tree.GetDescendant(0, 0, 0, 0, 1, 1, 0, 0, 1).MatchedText);
             Assert.AreEqual(0, tree.GetDescendant(1).Branches.Count);
         }
+        */
 
         [TestMethod]
         public void Parse()

@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,10 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Grammar Grammar { get; }
 
+        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.Cancel;
+        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.NextSibling;
+        public override IReadOnlyList<Rule> Children { get; }
+
         public NotRule(Compatible c, Rule rule)
             : base(c)
         {
@@ -22,11 +27,33 @@ namespace PseudoEBNF.Parsing.Rules
             { throw new Exception(); }
 
             Rule = rule;
+
+            Children = new[] { rule };
         }
 
         public override Rule Clone()
         {
             return new NotRule(this, Rule.Clone());
+        }
+
+        public override bool IsFull(IReadOnlyList<IParseNode> nodes)
+        {
+            return true;
+        }
+
+        public override bool IsComplete(IReadOnlyList<IParseNode> nodes)
+        {
+            return true;
+        }
+
+        public override bool IsExhausted(int ruleIndex)
+        {
+            return true;
+        }
+
+        public override string ToString()
+        {
+            return $"{{not {Rule}}}";
         }
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)

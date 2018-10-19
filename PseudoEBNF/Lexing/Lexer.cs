@@ -41,7 +41,7 @@ namespace PseudoEBNF.Lexing
             Grammar.DefineString(name, text);
         }
 
-        public IEnumerable<Lexeme> Lex(Supervisor super, string input)
+        public IEnumerable<Lexeme> Lex(string input)
         {
             var results = new List<Lexeme>();
 
@@ -73,7 +73,7 @@ namespace PseudoEBNF.Lexing
                     var name = pair.Key;
                     var token = pair.Value;
 
-                    super.ReportHypothesis(token, index);
+                    Super.ReportHypothesis(token, index);
 
                     var match = token.Match(input, index);
                     if (match.Success)
@@ -81,7 +81,7 @@ namespace PseudoEBNF.Lexing
                         var lexeme = match.Result;
                         index += lexeme.Length;
                         results.Add(lexeme);
-                        super.ReportSuccess(token, lexeme.MatchedText);
+                        Super.ReportSuccess(token, lexeme.MatchedText);
                         break;
                     }
                 }

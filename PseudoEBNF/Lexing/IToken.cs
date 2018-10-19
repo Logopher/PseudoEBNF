@@ -18,5 +18,10 @@ namespace PseudoEBNF.Lexing
         public abstract Token Clone();
 
         public abstract bool Equals(Token other);
+
+        public override string ToString()
+        {
+            return $"{{token {Name}}}";
+        }
     }
 }

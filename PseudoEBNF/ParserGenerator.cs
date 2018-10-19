@@ -1,5 +1,5 @@
 ﻿using PseudoEBNF.Common;
-using PseudoEBNF.Parsing;
+using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.PseudoEBNF;
 using PseudoEBNF.Semantics;
@@ -10,11 +10,11 @@ namespace PseudoEBNF
 {
     public class ParserGenerator
     {
-        LLParser parser;
+        LexingParser parser;
 
         public ParserGenerator()
         {
-            parser = new LLParser();
+            parser = new LexingParser();
 
             parser.SetImplicit(RuleName.Whitespace);
             parser.SetImplicit(RuleName.LineComment);
@@ -117,9 +117,9 @@ namespace PseudoEBNF
             parser.AttachAction(RuleName.SimpleExpression, RuleActions.Unwrap);
         }
 
-        public LLParser SpawnParser(LLParser parser, string grammar, params string[] implicitNames)
+        public LLParser SpawnParser(Parser parser, string grammar, params string[] implicitNames)
         {
-            var result = new LLParser();
+            var result = new LLParser(ParserType.LL_Char);
 
             foreach (var name in implicitNames)
             {

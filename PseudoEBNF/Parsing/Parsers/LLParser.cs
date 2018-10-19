@@ -8,18 +8,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PseudoEBNF
+namespace PseudoEBNF.Parsing.Parsers
 {
     public class LLParser : Parser
     {
+        public ParserType Type { get; }
         public Supervisor Super { get; }
         public Grammar Grammar { get; }
         public Lexer Lexer { get; }
 
         public bool IsLocked => Grammar.IsLocked;
 
-        public LLParser()
+        public LLParser(ParserType type)
         {
+            Type = type;
             Super = new Supervisor();
             Grammar = new Grammar(this, Super);
             Lexer = new Lexer(Super, Grammar);
@@ -69,7 +71,7 @@ namespace PseudoEBNF
             return Grammar.GetToken(name);
         }
 
-        internal NameRule ReferenceRule(string name)
+        public override NameRule ReferenceRule(string name)
         {
             if (IsLocked)
             { throw new Exception(); }
@@ -82,41 +84,34 @@ namespace PseudoEBNF
             if (!IsLocked)
             { throw new Exception(); }
 
-            var lexemes = Lex(input);
-
-            var parseTree = ParseSyntax(lexemes);
+            var parseTree = ParseSyntax(input);
 
             var semanticTree = ParseSemantics(parseTree);
 
             return semanticTree;
         }
 
-        public override IParseNode ParseSyntax(string input)
+        public override BranchParseNode ParseSyntax(string input)
         {
             if (!IsLocked)
             { throw new Exception(); }
 
-            var lexemes = Lex(input);
+            switch (Type)
+            {
+                case ParserType.LL_Lex:
+                    /*
+                    var lexemes = Lex(input);
 
-            return ParseSyntax(lexemes);
-        }
+                    return ParseSyntax(lexemes);
+                    */
+                    throw new Exception();
+                case ParserType.LL_Char:
+                    var machine = new StackMachine(Grammar);
 
-        public override IEnumerable<Lexeme> Lex(string input)
-        {
-            if (!IsLocked)
-            { throw new Exception(); }
-
-            return Lexer.Lex(Super, input);
-        }
-
-        public override BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes)
-        {
-            if (!IsLocked)
-            { throw new Exception(); }
-
-            var match = Grammar.RootRule.Match(lexemes.ToList());
-
-            return match.Success ? (BranchParseNode)match.Result : null;
+                    return machine.Parse(input);
+                default:
+                    throw new Exception();
+            }
         }
 
         public override ISemanticNode ParseSemantics(BranchParseNode node)

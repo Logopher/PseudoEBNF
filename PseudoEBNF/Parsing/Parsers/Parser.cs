@@ -22,12 +22,10 @@ namespace PseudoEBNF
 
         public abstract Token GetToken(string name);
 
-        public abstract IParseNode ParseSyntax(string input);
-
-        public abstract IEnumerable<Lexeme> Lex(string input);
-
-        public abstract BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes);
+        public abstract BranchParseNode ParseSyntax(string input);
 
         public abstract ISemanticNode ParseSemantics(BranchParseNode node);
+
+        public abstract NameRule ReferenceRule(string name);
     }
 }

@@ -12,6 +12,7 @@ namespace PseudoEBNF.Parsing.Nodes
         public IReadOnlyList<BranchParseNode> _elements;
         private IReadOnlyList<BranchParseNode> _branches;
 
+        public int StartIndex { get; }
         public Rule Rule { get; }
         public string MatchedText { get; }
         public int Length { get; }
@@ -22,15 +23,17 @@ namespace PseudoEBNF.Parsing.Nodes
         public IReadOnlyList<BranchParseNode> Branches => !IsTwig ? _branches : throw new Exception();
         public IReadOnlyList<BranchParseNode> Elements => !IsTwig ? _elements : throw new Exception();
 
-        public BranchParseNode(Rule rule, params IParseNode[] nodes)
-            : this(rule, (IEnumerable<IParseNode>)nodes)
+        public BranchParseNode(Rule rule, int index, params IParseNode[] nodes)
+            : this(rule, index, (IEnumerable<IParseNode>)nodes)
         {
         }
 
-        public BranchParseNode(Rule rule, IEnumerable<IParseNode> nodes)
+        public BranchParseNode(Rule rule, int index, IEnumerable<IParseNode> nodes)
         {
             Rule = rule;
-            var children = nodes.ToList();
+            var children = nodes
+                .Where(n => n != null)
+                .ToArray();
             var withoutImplicit = children
                 .Where(n => !(n.Rule is NameRule name && name.Name == RuleName.Implicit))
                 .ToArray();
@@ -83,9 +86,10 @@ namespace PseudoEBNF.Parsing.Nodes
                 }
             }
 
-            MatchedText = string.Join("", nodes.Select(n => n.MatchedText));
-            Length = nodes.Sum(n => n.Length);
-            LexemeCount = nodes.Sum(n => n.LexemeCount);
+            StartIndex = index;
+            MatchedText = string.Join("", children.Select(n => n.MatchedText));
+            Length = children.Sum(n => n.Length);
+            LexemeCount = children.Sum(n => n.LexemeCount);
         }
 
         public BranchParseNode Unwrap()

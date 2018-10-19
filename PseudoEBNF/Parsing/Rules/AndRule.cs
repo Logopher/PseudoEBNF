@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,10 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class AndRule : Rule
     {
-        public IList<Rule> Children { get; }
+        public override IReadOnlyList<Rule> Children { get; }
+
+        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextChild;
+        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.Cancel;
 
         public AndRule(Compatible c, IEnumerable<Rule> rules)
             : base(c)
@@ -37,6 +41,11 @@ namespace PseudoEBNF.Parsing.Rules
             return new AndRule(this, Children.Select(n => n.Clone()));
         }
 
+        public override string ToString()
+        {
+            return $"{{and {string.Join(" ", Children)}}}";
+        }
+
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var index = 0;
@@ -59,7 +68,7 @@ namespace PseudoEBNF.Parsing.Rules
                 }
             }
 
-            return new Match<IParseNode>(new BranchParseNode(this, results), true);
+            return new Match<IParseNode>(new BranchParseNode(this, results.First().StartIndex, results), true);
         }
     }
 }

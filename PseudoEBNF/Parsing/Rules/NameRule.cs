@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Parsers;
 using System;
 using System.Collections.Generic;
 
@@ -13,6 +14,8 @@ namespace PseudoEBNF.Parsing.Rules
         public Grammar Grammar { get; }
 
         public Rule Rule => Grammar.GetRule(Name);
+
+        public override IReadOnlyList<Rule> Children => new[] { Rule };
 
         public NameRule(Compatible c, Grammar grammar, string name)
             : base(c)
@@ -42,7 +45,7 @@ namespace PseudoEBNF.Parsing.Rules
             var match = rule.Match(lexemes);
             if (match.Success)
             {
-                return new Match<IParseNode>(new BranchParseNode(this, new[] { match.Result }), true);
+                return new Match<IParseNode>(new BranchParseNode(this, match.Result.StartIndex, new[] { match.Result }), true);
             }
             else
             {

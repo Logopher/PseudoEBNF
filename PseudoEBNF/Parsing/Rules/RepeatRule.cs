@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,11 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Grammar Grammar { get; }
 
+        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextChild;
+        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.NextSibling;
+
+        public override IReadOnlyList<Rule> Children { get; }
+
         public RepeatRule(Compatible c, Rule rule)
             : base(c)
         {
@@ -23,6 +29,8 @@ namespace PseudoEBNF.Parsing.Rules
             { throw new Exception(); }
 
             Rule = rule;
+
+            Children = new[] { rule };
         }
 
         public override Rule Clone()
@@ -30,15 +38,39 @@ namespace PseudoEBNF.Parsing.Rules
             return new RepeatRule(this, Rule.Clone());
         }
 
+        public override bool IsFull(IReadOnlyList<IParseNode> nodes)
+        {
+            return false;
+        }
+
+        public override bool IsComplete(IReadOnlyList<IParseNode> nodes)
+        {
+            return true;
+        }
+
+        public override bool IsExhausted(int ruleIndex)
+        {
+            return false;
+        }
+
+        public override Rule GetChild(int index)
+        {
+            return Rule;
+        }
+
+        public override string ToString()
+        {
+            return $"{{repeat {Rule}}}";
+        }
+
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var index = 0;
-            var list = lexemes.ToList();
             var results = new List<IParseNode>();
 
             while (index < lexemes.Count)
             {
-                var match = Rule.Match(list.GetRange(index, list.Count - index));
+                var match = Rule.Match(lexemes.GetRange(index, lexemes.Count - index));
                 if (match.Success)
                 {
                     results.Add(match.Result);
@@ -50,7 +82,7 @@ namespace PseudoEBNF.Parsing.Rules
                 }
             }
 
-            return new Match<IParseNode>(new BranchParseNode(this, results), true);
+            return new Match<IParseNode>(new BranchParseNode(this, lexemes.FirstOrDefault()?.StartIndex ?? -1, results), true);
         }
     }
 }

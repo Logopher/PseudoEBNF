@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
 using System;
@@ -21,6 +22,8 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Grammar Grammar { get; }
 
+        public override IReadOnlyList<Rule> Children { get; }
+
         public NamedRule(Compatible c, Supervisor super, string name, Rule rule)
             : base(c)
         {
@@ -30,23 +33,7 @@ namespace PseudoEBNF.Parsing.Rules
             Super = super;
             Name = name;
             Rule = rule;
-        }
-
-        public override Match<IParseNode> Match(List<Lexeme> lexemes)
-        {
-            Super.ReportHypothesis(this, lexemes.FirstOrDefault()?.StartIndex);
-
-            var match = Rule.Match(lexemes);
-            if (match.Success)
-            {
-                Super.ReportSuccess(this, match.Result.MatchedText);
-                return new Match<IParseNode>(new BranchParseNode(this, new[] { match.Result }), true);
-            }
-            else
-            {
-                Super.ReportFailure(this);
-                return new Match<IParseNode>(null, false);
-            }
+            Children = new[] { rule };
         }
 
         public override Rule Clone()
@@ -92,6 +79,28 @@ namespace PseudoEBNF.Parsing.Rules
             else
             {
                 return new BranchSemanticNode(0, children);
+            }
+        }
+
+        public override string ToString()
+        {
+            return $"{{rule {Name}}}";
+        }
+
+        public override Match<IParseNode> Match(List<Lexeme> lexemes)
+        {
+            Super.ReportHypothesis(this, lexemes.FirstOrDefault()?.StartIndex);
+
+            var match = Rule.Match(lexemes);
+            if (match.Success)
+            {
+                Super.ReportSuccess(this, match.Result.MatchedText);
+                return new Match<IParseNode>(new BranchParseNode(this, match.Result.StartIndex, new[] { match.Result }), true);
+            }
+            else
+            {
+                Super.ReportFailure(this);
+                return new Match<IParseNode>(null, false);
             }
         }
     }

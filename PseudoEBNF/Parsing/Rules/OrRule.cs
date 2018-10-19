@@ -1,6 +1,7 @@
 ﻿using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,10 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class OrRule : Rule
     {
-        public IList<Rule> Children { get; }
+        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextSibling;
+        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.NextChild;
+
+        public override IReadOnlyList<Rule> Children { get; }
 
         public Supervisor Super { get; }
 
@@ -40,6 +44,26 @@ namespace PseudoEBNF.Parsing.Rules
         public override Rule Clone()
         {
             return new OrRule(this, Children.Select(n => n.Clone()));
+        }
+
+        public override bool IsFull(IReadOnlyList<IParseNode> nodes)
+        {
+            return nodes.Count == 1;
+        }
+
+        public override bool IsComplete(IReadOnlyList<IParseNode> nodes)
+        {
+            return nodes.Count == 1;
+        }
+
+        public override bool IsExhausted(int ruleIndex)
+        {
+            return Children.Count <= ruleIndex;
+        }
+
+        public override string ToString()
+        {
+            return $"{{or {string.Join(" ", Children)}}}";
         }
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
