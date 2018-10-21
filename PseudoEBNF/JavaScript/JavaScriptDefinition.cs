@@ -138,10 +138,6 @@ root = statement *statement;
             var parserGen = new ParserGenerator();
             var parser = parserGen.SpawnParser(grammar, "ws", "lineComment", "blockComment");
 
-            parser.SetImplicit("ws");
-            parser.SetImplicit("blockComment");
-            parser.SetImplicit("lineComment");
-
             //*
             parser.AttachAction("root", (branch, recurse) =>
             {
