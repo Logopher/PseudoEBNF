@@ -10,6 +10,13 @@ namespace PseudoEBNF.Parsing.Parsers
 {
     public class StackMachine
     {
+        enum Operation
+        {
+            Push,
+            Build,
+            Cancel,
+        }
+
         public Grammar Grammar { get; }
 
         List<StackFrame> Stack { get; } = new List<StackFrame>();
@@ -27,7 +34,7 @@ namespace PseudoEBNF.Parsing.Parsers
         {
             StackFrame removedFrame = null;
             var frame = PushFrame(Index, Grammar.RootRule);
-            StackFrame parentFrame = null;
+            var lastOperation = Operation.Push;
 
             while (true)
             {
@@ -40,11 +47,25 @@ namespace PseudoEBNF.Parsing.Parsers
 
                     removedFrame = PopFrame();
                     frame = PeekFrame();
-                    parentFrame = PeekFrame(1);
 
-                    Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}{(countSuccess ? '+' : '-')} {removedFrame.Rule}");
+                    char symbol;
+                    BranchParseNode result;
+                    if (countSuccess)
+                    {
+                        lastOperation = Operation.Build;
+                        symbol = '+';
+                        result = new BranchParseNode(removedFrame.Rule, removedFrame.InputIndex, removedFrame.Nodes);
+                    }
+                    else
+                    {
+                        lastOperation = Operation.Cancel;
+                        symbol = '-';
+                        result = null;
+                    }
 
-                    return countSuccess ? new BranchParseNode(removedFrame.Rule, removedFrame.InputIndex, removedFrame.Nodes) : null;
+                    Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}{symbol} {removedFrame.Rule}");
+
+                    return result;
                 }
 
                 void addnode(IParseNode n)
@@ -58,8 +79,7 @@ namespace PseudoEBNF.Parsing.Parsers
                     var match = token.Match(input, Index);
 
                     success = match.Success;
-                    if (success)
-                    { addnode(match.Result); }
+                    addnode(match.Result);
                 }
                 else if (frame.IsFull || frame.IsExhausted)
                 {
@@ -67,61 +87,62 @@ namespace PseudoEBNF.Parsing.Parsers
                 }
                 else
                 {
-                    if (frame.RuleIndex != 0)
-                    { throw new Exception(); }
-
-                    var rule = frame.PopRule();
-
-                    if (rule == null)
-                    { throw new Exception(); }
-                    else
-                    { frame = PushFrame(Index, rule); }
-
-                    continue;
+                    switch (lastOperation)
+                    {
+                        case Operation.Build:
+                            frame = PushFrame(Index, frame.PopRule());
+                            lastOperation = Operation.Push;
+                            success = true;
+                            break;
+                        case Operation.Cancel:
+                            success = false;
+                            break;
+                        case Operation.Push:
+                            frame = PushFrame(Index, frame.PopRule());
+                            continue;
+                        default:
+                            throw new Exception();
+                    }
                 }
 
-                if (parentFrame == null)
+                var child = popnpeek(false);
+
+                if(frame == null)
                 {
-                    if (success)
-                    { return new BranchParseNode(frame.Rule, frame.InputIndex, frame.Nodes); }
-                    else
-                    { return null; }
+                    return child;
                 }
 
-                var action = success ? parentFrame.Rule.SuccessAction : parentFrame.Rule.FailureAction;
+                var action = success ? frame.Rule.SuccessAction : frame.Rule.FailureAction;
                 switch (action)
                 {
                     case Action.NextSibling:
                         {
-                            addnode(popnpeek(false));
+                            addnode(child);
 
                             addnode(popnpeek(true));
 
                             var rule = frame.PopRule();
                             if (rule != null)
-                            { frame = PushFrame(Index, rule); }
+                            {
+                                frame = PushFrame(Index, rule);
+                                lastOperation = Operation.Push;
+                            }
                         }
                         break;
                     case Action.NextChild:
                         {
-                            addnode(popnpeek(false));
+                            addnode(child);
 
                             var rule = frame.PopRule();
                             if (rule != null)
-                            { frame = PushFrame(Index, rule); }
+                            {
+                                frame = PushFrame(Index, rule);
+                                lastOperation = Operation.Push;
+                            }
                         }
                         break;
-                    case Action.CancelChild:
-                        {
-                            var child = popnpeek(false);
-                        }
-                        break;
-                    case Action.CancelSelf:
-                        {
-                            var child = popnpeek(false);
-
-                            var self = popnpeek(false);
-                        }
+                    case Action.Cancel:
+                        lastOperation = Operation.Cancel;
                         break;
                 }
 
@@ -198,8 +219,7 @@ namespace PseudoEBNF.Parsing.Parsers
         {
             NextSibling,
             NextChild,
-            CancelChild,
-            CancelSelf,
+            Cancel,
         }
     }
 }

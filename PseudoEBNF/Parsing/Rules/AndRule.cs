@@ -13,7 +13,7 @@ namespace PseudoEBNF.Parsing.Rules
         public override IReadOnlyList<Rule> Children { get; }
 
         public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextChild;
-        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.CancelSelf;
+        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.Cancel;
 
         public AndRule(Compatible c, IEnumerable<Rule> rules)
             : base(c)

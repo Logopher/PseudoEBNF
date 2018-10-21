@@ -16,7 +16,7 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Grammar Grammar { get; }
 
-        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.CancelSelf;
+        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.Cancel;
         public override StackMachine.Action FailureAction { get; } = StackMachine.Action.NextSibling;
         public override IReadOnlyList<Rule> Children { get; }
 

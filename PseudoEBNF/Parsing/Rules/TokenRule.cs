@@ -12,7 +12,7 @@ namespace PseudoEBNF.Parsing.Rules
     public class TokenRule : Rule
     {
         public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextSibling;
-        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.CancelSelf;
+        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.Cancel;
 
         public Token Token { get; }
 
