@@ -25,6 +25,11 @@ namespace PseudoEBNF.Parsing.Parsers
 
         int Index => Stack.Sum(f => f.Nodes.Sum(n => n.Length));
 
+        StackFrame head;
+        StackFrame Head => head ?? PeekFrame();
+
+        Operation LastOperation { get; set; }
+
         public StackMachine(Grammar grammar)
         {
             Grammar = grammar;
@@ -32,122 +37,114 @@ namespace PseudoEBNF.Parsing.Parsers
 
         public BranchParseNode Parse(string input)
         {
-            StackFrame removedFrame = null;
-            var frame = PushFrame(Index, Grammar.RootRule);
-            var lastOperation = Operation.Push;
+            PushFrame(Index, Grammar.RootRule);
 
             while (true)
             {
                 bool success;
-                frame = PeekFrame();
 
-                BranchParseNode popnpeek(bool forceSuccess)
-                {
-                    var countSuccess = success || forceSuccess;
-
-                    removedFrame = PopFrame();
-                    frame = PeekFrame();
-
-                    char symbol;
-                    BranchParseNode result;
-                    if (countSuccess)
-                    {
-                        lastOperation = Operation.Build;
-                        symbol = '+';
-                        result = new BranchParseNode(removedFrame.Rule, removedFrame.InputIndex, removedFrame.Nodes);
-                    }
-                    else
-                    {
-                        lastOperation = Operation.Cancel;
-                        symbol = '-';
-                        result = null;
-                    }
-
-                    Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}{symbol} {removedFrame.Rule}");
-
-                    return result;
-                }
-
-                void addnode(IParseNode n)
-                {
-                    if (n != null)
-                    { frame.Nodes.Add(n); }
-                }
-
-                if (frame.Rule is TokenRule token)
+                if (Head.Rule is TokenRule token)
                 {
                     var match = token.Match(input, Index);
 
                     success = match.Success;
-                    addnode(match.Result);
+                    AddNodeToHead(match.Result);
                 }
-                else if (frame.IsFull || frame.IsExhausted)
+                else if (Head.IsFull || Head.IsExhausted)
                 {
-                    success = frame.IsComplete;
+                    success = Head.IsComplete;
                 }
                 else
                 {
-                    switch (lastOperation)
+                    switch (LastOperation)
                     {
                         case Operation.Build:
-                            frame = PushFrame(Index, frame.PopRule());
-                            lastOperation = Operation.Push;
+                            PushFrame(Index, Head.PopRule());
+                            LastOperation = Operation.Push;
                             success = true;
                             break;
                         case Operation.Cancel:
                             success = false;
                             break;
                         case Operation.Push:
-                            frame = PushFrame(Index, frame.PopRule());
+                            PushFrame(Index, Head.PopRule());
                             continue;
                         default:
                             throw new Exception();
                     }
                 }
 
-                var child = popnpeek(false);
+                var child = BuildNode(success);
 
-                if(frame == null)
+                if (Head == null)
                 {
                     return child;
                 }
 
-                var action = success ? frame.Rule.SuccessAction : frame.Rule.FailureAction;
+                var action = success ? Head.Rule.SuccessAction : Head.Rule.FailureAction;
                 switch (action)
                 {
                     case Action.NextSibling:
                         {
-                            addnode(child);
+                            AddNodeToHead(child);
 
-                            addnode(popnpeek(true));
+                            AddNodeToHead(BuildNode(true));
 
-                            var rule = frame.PopRule();
+                            var rule = Head.PopRule();
                             if (rule != null)
                             {
-                                frame = PushFrame(Index, rule);
-                                lastOperation = Operation.Push;
+                                PushFrame(Index, rule);
+                                LastOperation = Operation.Push;
                             }
                         }
                         break;
                     case Action.NextChild:
                         {
-                            addnode(child);
+                            AddNodeToHead(child);
 
-                            var rule = frame.PopRule();
+                            var rule = Head.PopRule();
                             if (rule != null)
                             {
-                                frame = PushFrame(Index, rule);
-                                lastOperation = Operation.Push;
+                                PushFrame(Index, rule);
+                                LastOperation = Operation.Push;
                             }
                         }
                         break;
                     case Action.Cancel:
-                        lastOperation = Operation.Cancel;
+                        LastOperation = Operation.Cancel;
                         break;
                 }
-
-                frame = null;
             }
+        }
+
+        BranchParseNode BuildNode(bool success)
+        {
+            var removedFrame = PopFrame();
+
+            char symbol;
+            BranchParseNode result;
+            if (success)
+            {
+                LastOperation = Operation.Build;
+                symbol = '+';
+                result = new BranchParseNode(removedFrame.Rule, removedFrame.InputIndex, removedFrame.Nodes);
+            }
+            else
+            {
+                LastOperation = Operation.Cancel;
+                symbol = '-';
+                result = null;
+            }
+
+            Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}{symbol} {removedFrame.Rule}");
+
+            return result;
+        }
+
+        void AddNodeToHead(IParseNode node)
+        {
+            if (node != null)
+            { Head.Nodes.Add(node); }
         }
 
         StackFrame PopFrame()
@@ -160,6 +157,8 @@ namespace PseudoEBNF.Parsing.Parsers
             var result = Stack[index];
             Stack.RemoveAt(index);
 
+            head = null;
+
             return result;
         }
 
@@ -170,7 +169,12 @@ namespace PseudoEBNF.Parsing.Parsers
             if (index < 0)
             { return null; }
 
-            return Stack[index];
+            var result = Stack[index];
+
+            if (index == 0)
+            { head = result; }
+
+            return result;
         }
 
         StackFrame PushFrame(int startIndex, Rule rule)
@@ -182,6 +186,8 @@ namespace PseudoEBNF.Parsing.Parsers
         {
             Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}? {frame.Rule}");
             Stack.Add(frame);
+            head = frame;
+            LastOperation = Operation.Push;
             return frame;
         }
 
