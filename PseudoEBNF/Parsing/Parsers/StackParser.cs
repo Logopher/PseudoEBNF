@@ -67,7 +67,6 @@ namespace PseudoEBNF.Parsing.Parsers
                     {
                         case Operation.Build:
                             PushFrame(Index, Head.PopRule());
-                            LastOperation = Operation.Push;
                             success = true;
                             break;
                         case Operation.Cancel:
@@ -84,9 +83,7 @@ namespace PseudoEBNF.Parsing.Parsers
                 var child = BuildNode(success);
 
                 if (Head == null)
-                {
-                    return child;
-                }
+                { return child; }
 
                 var action = success ? Head.Rule.SuccessAction : Head.Rule.FailureAction;
                 switch (action)
@@ -96,25 +93,15 @@ namespace PseudoEBNF.Parsing.Parsers
                             AddNodeToHead(child);
 
                             AddNodeToHead(BuildNode(true));
-
-                            var rule = Head.PopRule();
-                            if (rule != null)
-                            {
-                                PushFrame(Index, rule);
-                                LastOperation = Operation.Push;
-                            }
+                            
+                            PushFrame(Index, Head.PopRule());
                         }
                         break;
                     case Action.NextChild:
                         {
                             AddNodeToHead(child);
 
-                            var rule = Head.PopRule();
-                            if (rule != null)
-                            {
-                                PushFrame(Index, rule);
-                                LastOperation = Operation.Push;
-                            }
+                            PushFrame(Index, Head.PopRule());
                         }
                         break;
                     case Action.Cancel:
@@ -184,18 +171,20 @@ namespace PseudoEBNF.Parsing.Parsers
             return result;
         }
 
-        StackFrame PushFrame(int startIndex, Rule rule)
+        void PushFrame(int startIndex, Rule rule)
         {
-            return PushFrame(new StackFrame(startIndex, rule));
+            if(rule == null)
+            { return; }
+
+            PushFrame(new StackFrame(startIndex, rule));
         }
 
-        StackFrame PushFrame(StackFrame frame)
+        void PushFrame(StackFrame frame)
         {
             Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}? {frame.Rule}");
             Stack.Add(frame);
             head = frame;
             LastOperation = Operation.Push;
-            return frame;
         }
 
         class StackFrame
@@ -209,12 +198,18 @@ namespace PseudoEBNF.Parsing.Parsers
             public int InputIndex { get; }
             public int RuleIndex { get; private set; } = 0;
 
-            public bool IsLeaf => Rule is TokenRule;
-
             public StackFrame(int startIndex, Rule rule)
             {
                 InputIndex = startIndex;
-                Rule = rule;
+                Rule = rule ?? throw new Exception();
+            }
+
+            internal void AddNode(IParseNode node)
+            {
+                if(node.Rule != PeekRule())
+                { throw new Exception(); }
+
+                Nodes.Add(node);
             }
 
             internal Rule PeekRule()
