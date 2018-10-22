@@ -23,6 +23,12 @@ namespace PseudoEBNF
             Grammar = new Grammar(this, Super);
         }
 
+        public LexingParser(Grammar grammar)
+        {
+            Super = grammar.Super;
+            Grammar = grammar;
+        }
+
         public override void Lock()
         {
             if (!IsLocked)

@@ -14,8 +14,8 @@ namespace PseudoEBNF.Parsing.Rules
         {
         }
 
-        public virtual StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextChild;
-        public virtual StackMachine.Action FailureAction { get; } = StackMachine.Action.Cancel;
+        public virtual StackParser.Action SuccessAction { get; } = StackParser.Action.NextChild;
+        public virtual StackParser.Action FailureAction { get; } = StackParser.Action.Cancel;
 
         public virtual bool IsFull(IReadOnlyList<IParseNode> nodes)
         {

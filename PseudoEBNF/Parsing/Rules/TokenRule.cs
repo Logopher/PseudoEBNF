@@ -11,8 +11,8 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class TokenRule : Rule
     {
-        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextSibling;
-        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.Cancel;
+        public override StackParser.Action SuccessAction { get; } = StackParser.Action.NextSibling;
+        public override StackParser.Action FailureAction { get; } = StackParser.Action.Cancel;
 
         public Token Token { get; }
 

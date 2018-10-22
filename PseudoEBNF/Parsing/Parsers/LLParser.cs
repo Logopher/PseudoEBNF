@@ -5,8 +5,6 @@ using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PseudoEBNF.Parsing.Parsers
 {
@@ -15,7 +13,6 @@ namespace PseudoEBNF.Parsing.Parsers
         public ParserType Type { get; }
         public Supervisor Super { get; }
         public Grammar Grammar { get; }
-        public Lexer Lexer { get; }
 
         public bool IsLocked => Grammar.IsLocked;
 
@@ -24,17 +21,12 @@ namespace PseudoEBNF.Parsing.Parsers
             Type = type;
             Super = new Supervisor();
             Grammar = new Grammar(this, Super);
-            Lexer = new Lexer(Super, Grammar);
         }
 
         public override void Lock()
         {
             if (!IsLocked)
-            {
-                Grammar.Lock();
-
-
-            }
+            { Grammar.Lock(); }
         }
 
         public void DefineRule(string name, Rule rule)
@@ -99,16 +91,17 @@ namespace PseudoEBNF.Parsing.Parsers
             switch (Type)
             {
                 case ParserType.LL_Lex:
-                    /*
-                    var lexemes = Lex(input);
+                    {
+                        var parser = new LexingParser(Grammar);
 
-                    return ParseSyntax(lexemes);
-                    */
-                    throw new Exception();
-                case ParserType.LL_Char:
-                    var machine = new StackMachine(Grammar);
+                        return parser.ParseSyntax(input);
+                    }
+                case ParserType.LL_Stack:
+                    {
+                        var parser = new StackParser(Grammar);
 
-                    return machine.Parse(input);
+                        return parser.ParseSyntax(input);
+                    }
                 default:
                     throw new Exception();
             }

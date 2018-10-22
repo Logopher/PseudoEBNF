@@ -8,12 +8,19 @@ using System.Linq;
 
 namespace PseudoEBNF.Parsing.Parsers
 {
-    public class StackMachine
+    public class StackParser
     {
         enum Operation
         {
             Push,
             Build,
+            Cancel,
+        }
+
+        public enum Action
+        {
+            NextSibling,
+            NextChild,
             Cancel,
         }
 
@@ -30,12 +37,12 @@ namespace PseudoEBNF.Parsing.Parsers
 
         Operation LastOperation { get; set; }
 
-        public StackMachine(Grammar grammar)
+        public StackParser(Grammar grammar)
         {
             Grammar = grammar;
         }
 
-        public BranchParseNode Parse(string input)
+        public BranchParseNode ParseSyntax(string input)
         {
             PushFrame(Index, Grammar.RootRule);
 
@@ -219,13 +226,6 @@ namespace PseudoEBNF.Parsing.Parsers
             {
                 return Rule.GetChild(RuleIndex++);
             }
-        }
-
-        public enum Action
-        {
-            NextSibling,
-            NextChild,
-            Cancel,
         }
     }
 }

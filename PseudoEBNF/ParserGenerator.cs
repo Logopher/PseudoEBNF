@@ -119,7 +119,7 @@ namespace PseudoEBNF
 
         public LLParser SpawnParser(Parser parser, string grammar, params string[] implicitNames)
         {
-            var result = new LLParser(ParserType.LL_Char);
+            var result = new LLParser(ParserType.LL_Stack);
 
             foreach (var name in implicitNames)
             {

@@ -11,8 +11,8 @@ namespace PseudoEBNF.Parsing.Rules
 {
     public class OrRule : Rule
     {
-        public override StackMachine.Action SuccessAction { get; } = StackMachine.Action.NextSibling;
-        public override StackMachine.Action FailureAction { get; } = StackMachine.Action.NextChild;
+        public override StackParser.Action SuccessAction { get; } = StackParser.Action.NextSibling;
+        public override StackParser.Action FailureAction { get; } = StackParser.Action.NextChild;
 
         public override IReadOnlyList<Rule> Children { get; }
 

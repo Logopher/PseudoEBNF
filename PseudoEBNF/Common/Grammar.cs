@@ -100,9 +100,7 @@ namespace PseudoEBNF.Common
         internal void SetImplicit(string name)
         {
             if (IsLocked)
-            {
-                throw new Exception();
-            }
+            { throw new Exception(); }
 
             implicitNames.Add(name);
         }
