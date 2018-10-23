@@ -8,9 +8,9 @@ namespace PseudoEBNF.Parsing.Nodes
 {
     public class BranchParseNode : IParseNode
     {
-        private LeafParseNode _leaf;
-        public IReadOnlyList<BranchParseNode> _elements;
-        private IReadOnlyList<BranchParseNode> _branches;
+        private readonly LeafParseNode _leaf;
+        private readonly IReadOnlyList<BranchParseNode> _elements;
+        private readonly IReadOnlyList<BranchParseNode> _branches;
 
         public int StartIndex { get; }
         public Rule Rule { get; }

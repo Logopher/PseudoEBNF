@@ -1,34 +1,41 @@
-﻿using PseudoEBNF.Lexing;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PseudoEBNF.Common
 {
     public class Grammar : Compatible
     {
-        public Guid CompatibilityGuid { get; }
-
-        Guid guid = Guid.NewGuid();
+        private readonly Guid guid = Guid.NewGuid();
 
         public Rule RootRule => GetRule(RuleName.Root);
 
         public Supervisor Super { get; }
 
-        readonly Dictionary<string, Token> tokens;
+        private readonly Dictionary<string, Token> tokens;
         public IReadOnlyDictionary<string, Token> Tokens => tokens;
 
-        readonly Dictionary<string, NamedRule> rules;
+        private readonly Dictionary<string, NamedRule> rules;
         public IReadOnlyDictionary<string, NamedRule> Rules => rules;
 
-        readonly List<string> implicitNames;
+        private readonly List<string> implicitNames;
         public IReadOnlyList<string> ImplicitNames => implicitNames;
 
         public bool IsLocked { get; private set; }
+
+        internal Grammar()
+            : base(Guid.NewGuid())
+        {
+            Super = new Supervisor();
+            tokens = new Dictionary<string, Token>();
+            rules = new Dictionary<string, NamedRule>();
+            implicitNames = new List<string>();
+        }
 
         internal Grammar(Compatible c, Supervisor super)
             : base(c)
@@ -39,7 +46,7 @@ namespace PseudoEBNF.Common
             implicitNames = new List<string>();
         }
 
-        Grammar(Compatible c, Dictionary<string, Token> tokens, Dictionary<string, NamedRule> rules, List<string> implicitNames)
+        private Grammar(Compatible c, Dictionary<string, Token> tokens, Dictionary<string, NamedRule> rules, List<string> implicitNames)
             : base(c)
         {
             this.tokens = tokens;
@@ -105,22 +112,13 @@ namespace PseudoEBNF.Common
             implicitNames.Add(name);
         }
 
-        internal void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
-        {
-            GetRule(name).AttachAction(action);
-        }
+        internal void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action) => GetRule(name).AttachAction(action);
 
-        public void DefineString(string name, string text)
-        {
-            DefineToken(name, new StringToken(this, name, text));
-        }
+        public void DefineString(string name, string text) => DefineToken(name, new StringToken(this, name, text));
 
-        public void DefineRegex(string name, string pattern)
-        {
-            DefineToken(name, new RegexToken(this, name, pattern));
-        }
+        public void DefineRegex(string name, string pattern) => DefineToken(name, new RegexToken(this, name, pattern));
 
-        void DefineToken(string name, Token token)
+        private void DefineToken(string name, Token token)
         {
             if (IsLocked)
             {
@@ -136,6 +134,14 @@ namespace PseudoEBNF.Common
             }
 
             DefineRule(name, rule);
+        }
+
+        public NameRule ReferenceRule(string name)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            return new NameRule(this, this, name);
         }
     }
 }

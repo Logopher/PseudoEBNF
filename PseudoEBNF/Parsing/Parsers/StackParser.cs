@@ -1,16 +1,19 @@
-﻿using PseudoEBNF.Common;
-using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing.Rules;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
+using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Rules;
+using PseudoEBNF.Reporting;
+using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.Parsing.Parsers
 {
-    public class StackParser
+    public class StackParser : Parser
     {
-        enum Operation
+        private enum Operation
         {
             Push,
             Build,
@@ -24,25 +27,85 @@ namespace PseudoEBNF.Parsing.Parsers
             Cancel,
         }
 
+        public Supervisor Super { get; }
         public Grammar Grammar { get; }
+        public bool IsLocked => Grammar.IsLocked;
 
-        List<StackFrame> Stack { get; } = new List<StackFrame>();
+        private List<StackFrame> Stack { get; } = new List<StackFrame>();
 
-        bool HasMoreFrames => 0 < Stack.Count;
+        private bool HasMoreFrames => 0 < Stack.Count;
 
-        int Index => Stack.Sum(f => f.Nodes.Sum(n => n.Length));
+        private int Index => Stack.Sum(f => f.Nodes.Sum(n => n.Length));
 
-        StackFrame head;
-        StackFrame Head => head ?? PeekFrame();
+        private StackFrame head;
 
-        Operation LastOperation { get; set; }
+        private StackFrame Head => head ?? PeekFrame();
+
+        private Operation LastOperation { get; set; }
 
         public StackParser(Grammar grammar)
+            : base(grammar)
         {
+            Super = grammar.Super;
             Grammar = grammar;
         }
 
-        public BranchParseNode ParseSyntax(string input)
+        public override void Lock()
+        {
+            if (!IsLocked)
+            {
+                Grammar.Lock();
+            }
+        }
+
+        public override NamedRule GetRule(string name)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
+
+            return Grammar.GetRule(name);
+        }
+
+        public override Token GetToken(string name)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
+
+            return Grammar.GetToken(name);
+        }
+
+        public override NameRule ReferenceRule(string name)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            return new NameRule(this, Grammar, name);
+        }
+
+        public override ISemanticNode Parse(string input)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
+
+            BranchParseNode parseTree = ParseSyntax(input);
+
+            ISemanticNode semanticTree = ParseSemantics(parseTree);
+
+            return semanticTree;
+        }
+
+        public override ISemanticNode ParseSemantics(BranchParseNode node)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
+
+            if (node.Rule is NamedRule named)
+            { return named.Action(node, ParseSemantics); }
+            else
+            { throw new Exception(); }
+        }
+
+        public override BranchParseNode ParseSyntax(string input)
         {
             PushFrame(Index, Grammar.RootRule);
 
@@ -52,7 +115,7 @@ namespace PseudoEBNF.Parsing.Parsers
 
                 if (Head.Rule is TokenRule token)
                 {
-                    var match = token.Match(input, Index);
+                    Match<IParseNode> match = token.Match(input, Index);
 
                     success = match.Success;
                     AddNodeToHead(match.Result);
@@ -80,12 +143,12 @@ namespace PseudoEBNF.Parsing.Parsers
                     }
                 }
 
-                var child = BuildNode(success);
+                BranchParseNode child = BuildNode(success);
 
                 if (Head == null)
                 { return child; }
 
-                var action = success ? Head.Rule.SuccessAction : Head.Rule.FailureAction;
+                Action action = success ? Head.Rule.SuccessAction : Head.Rule.FailureAction;
                 switch (action)
                 {
                     case Action.NextSibling:
@@ -93,7 +156,7 @@ namespace PseudoEBNF.Parsing.Parsers
                             AddNodeToHead(child);
 
                             AddNodeToHead(BuildNode(true));
-                            
+
                             PushFrame(Index, Head.PopRule());
                         }
                         break;
@@ -111,9 +174,9 @@ namespace PseudoEBNF.Parsing.Parsers
             }
         }
 
-        BranchParseNode BuildNode(bool success)
+        private BranchParseNode BuildNode(bool success)
         {
-            var removedFrame = PopFrame();
+            StackFrame removedFrame = PopFrame();
 
             char symbol;
             BranchParseNode result;
@@ -135,20 +198,20 @@ namespace PseudoEBNF.Parsing.Parsers
             return result;
         }
 
-        void AddNodeToHead(IParseNode node)
+        private void AddNodeToHead(IParseNode node)
         {
             if (node != null)
             { Head.Nodes.Add(node); }
         }
 
-        StackFrame PopFrame()
+        private StackFrame PopFrame()
         {
             var index = Stack.Count - 1;
 
             if (index < 0)
             { return null; }
 
-            var result = Stack[index];
+            StackFrame result = Stack[index];
             Stack.RemoveAt(index);
 
             head = null;
@@ -156,14 +219,14 @@ namespace PseudoEBNF.Parsing.Parsers
             return result;
         }
 
-        StackFrame PeekFrame(int depth = 0)
+        private StackFrame PeekFrame(int depth = 0)
         {
             var index = Stack.Count - (depth + 1);
 
             if (index < 0)
             { return null; }
 
-            var result = Stack[index];
+            StackFrame result = Stack[index];
 
             if (index == 0)
             { head = result; }
@@ -171,15 +234,15 @@ namespace PseudoEBNF.Parsing.Parsers
             return result;
         }
 
-        void PushFrame(int startIndex, Rule rule)
+        private void PushFrame(int startIndex, Rule rule)
         {
-            if(rule == null)
+            if (rule == null)
             { return; }
 
             PushFrame(new StackFrame(startIndex, rule));
         }
 
-        void PushFrame(StackFrame frame)
+        private void PushFrame(StackFrame frame)
         {
             Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}? {frame.Rule}");
             Stack.Add(frame);
@@ -187,7 +250,15 @@ namespace PseudoEBNF.Parsing.Parsers
             LastOperation = Operation.Push;
         }
 
-        class StackFrame
+        public override void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.AttachAction(name, action);
+        }
+
+        private class StackFrame
         {
             public Rule Rule { get; }
             public List<IParseNode> Nodes { get; } = new List<IParseNode>();
@@ -206,21 +277,15 @@ namespace PseudoEBNF.Parsing.Parsers
 
             internal void AddNode(IParseNode node)
             {
-                if(node.Rule != PeekRule())
+                if (node.Rule != PeekRule())
                 { throw new Exception(); }
 
                 Nodes.Add(node);
             }
 
-            internal Rule PeekRule()
-            {
-                return Rule.GetChild(RuleIndex);
-            }
+            internal Rule PeekRule() => Rule.GetChild(RuleIndex);
 
-            internal Rule PopRule()
-            {
-                return Rule.GetChild(RuleIndex++);
-            }
+            internal Rule PopRule() => Rule.GetChild(RuleIndex++);
         }
     }
 }

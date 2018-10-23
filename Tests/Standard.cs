@@ -13,7 +13,7 @@ document.getElementById('demo').innerHTML = Date()
 
         public static Parser GetParser ()
         {
-            return JavaScriptDefinition.Parser();
+            return JavaScriptDefinition.GetParser();
         }
 
         public static LexemeList GetLexemes(Parser parser = null)

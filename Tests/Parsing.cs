@@ -28,7 +28,13 @@ abc = ""abc"";
 
 root = abc;
 ";
-            var parser = parserGen.SpawnParser(grammar);
+            var settings = new ParserSettings
+            {
+                Algorithm = Parser.Algorithm.LL,
+                NestingType = Parser.NestingType.Stack,
+                Unit = Parser.Unit.Character,
+            };
+            var parser = parserGen.SpawnParser(settings, grammar);
 
             parser.AttachAction("abc", (branch, recurse) =>
             {
@@ -81,7 +87,13 @@ root = abc;
 //{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 {RuleName.Root} = {RuleName.Identifier} ?({RuleName.Identifier} {RuleName.Identifier});
 ";
-            var parser = parserGen.SpawnParser(grammar, RuleName.Whitespace, RuleName.LineComment);
+            var settings = new ParserSettings
+            {
+                Algorithm = Parser.Algorithm.LL,
+                NestingType = Parser.NestingType.Stack,
+                Unit = Parser.Unit.Character,
+            };
+            var parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
 
             parser.AttachAction(RuleName.Identifier, (branch, recurse) =>
             {
@@ -140,8 +152,13 @@ root = abc;
 //{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 {RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 ";
-
-            var parser = parserGen.SpawnParser(grammar, RuleName.Whitespace, RuleName.LineComment);
+            var settings = new ParserSettings
+            {
+                Algorithm = Parser.Algorithm.LL,
+                NestingType = Parser.NestingType.Stack,
+                Unit = Parser.Unit.Character,
+            };
+            var parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
 
             parser.ToString();
         }

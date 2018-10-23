@@ -1,21 +1,19 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Linq;
+using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Parsing.Rules;
 using PseudoEBNF.PseudoEBNF;
 using PseudoEBNF.Semantics;
-using System;
-using System.Linq;
 
 namespace PseudoEBNF
 {
     public class ParserGenerator
     {
-        LexingParser parser;
+        private readonly BootstrapParser parser = new BootstrapParser();
 
         public ParserGenerator()
         {
-            parser = new LexingParser();
-
             parser.SetImplicit(RuleName.Whitespace);
             parser.SetImplicit(RuleName.LineComment);
 
@@ -117,45 +115,45 @@ namespace PseudoEBNF
             parser.AttachAction(RuleName.SimpleExpression, RuleActions.Unwrap);
         }
 
-        public LLParser SpawnParser(Parser parser, string grammar, params string[] implicitNames)
+        public Parser SpawnParser(Parser parser, ParserSettings settings, string grammar, params string[] implicitNames)
         {
-            var result = new LLParser(ParserType.LL_Stack);
+            var resultGrammar = new Grammar();
 
             foreach (var name in implicitNames)
             {
-                result.SetImplicit(name);
+                resultGrammar.SetImplicit(name);
             }
 
             parser.Lock();
 
-            var semantics = parser.Parse(grammar);
+            ISemanticNode semantics = parser.Parse(grammar);
 
             var root = (BranchSemanticNode)semantics;
 
-            foreach (var decl in root.Children.Cast<BranchSemanticNode>())
+            foreach (BranchSemanticNode decl in root.Children.Cast<BranchSemanticNode>())
             {
                 var left = (LeafSemanticNode)decl.Children[0];
                 var name = left.Value;
 
-                var right = decl.Children[1];
+                ISemanticNode right = decl.Children[1];
 
                 if (right is BranchSemanticNode branch)
                 {
-                    var rule = Interpret(result, right);
-                    result.DefineRule(name, rule);
+                    Rule rule = Interpret(resultGrammar, right);
+                    resultGrammar.DefineRule(name, rule);
                 }
                 else if (right is LeafSemanticNode leaf)
                 {
                     switch ((EbnfNodeType)leaf.NodeType)
                     {
                         case EbnfNodeType.Identifier:
-                            result.DefineRule(name, result.ReferenceRule(leaf.Value));
+                            resultGrammar.DefineRule(name, resultGrammar.ReferenceRule(leaf.Value));
                             break;
                         case EbnfNodeType.String:
-                            result.DefineString(name, leaf.Value);
+                            resultGrammar.DefineString(name, leaf.Value);
                             break;
                         case EbnfNodeType.Regex:
-                            result.DefineRegex(name, leaf.Value);
+                            resultGrammar.DefineRegex(name, leaf.Value);
                             break;
 
                         default:
@@ -168,15 +166,12 @@ namespace PseudoEBNF
                 }
             }
 
-            return result;
+            return new ParserManager(resultGrammar, settings);
         }
 
-        public LLParser SpawnParser(string grammar, params string[] implicitNames)
-        {
-            return SpawnParser(parser, grammar, implicitNames);
-        }
+        public Parser SpawnParser(ParserSettings settings, string grammar, params string[] implicitNames) => SpawnParser(parser, settings, grammar, implicitNames);
 
-        private Rule Interpret(LLParser result, ISemanticNode node)
+        private Rule Interpret(Grammar grammar, ISemanticNode node)
         {
             Rule rule = null;
 
@@ -185,27 +180,27 @@ namespace PseudoEBNF
                 switch ((EbnfNodeType)branch.NodeType)
                 {
                     case EbnfNodeType.Group:
-                        rule = Interpret(result, branch.Children[0]);
+                        rule = Interpret(grammar, branch.Children[0]);
                         break;
                     case EbnfNodeType.Repeat:
-                        rule = new RepeatRule(result, Interpret(result, branch.Children[0]));
+                        rule = new RepeatRule(grammar, Interpret(grammar, branch.Children[0]));
                         break;
                     case EbnfNodeType.Optional:
-                        rule = new OptionalRule(result, Interpret(result, branch.Children[0]));
+                        rule = new OptionalRule(grammar, Interpret(grammar, branch.Children[0]));
                         break;
                     case EbnfNodeType.Not:
-                        rule = new NotRule(result, Interpret(result, branch.Children[0]));
+                        rule = new NotRule(grammar, Interpret(grammar, branch.Children[0]));
                         break;
 
                     case EbnfNodeType.And:
-                        rule = new AndRule(result, branch.Children.Select(child => Interpret(result, child)));
+                        rule = new AndRule(grammar, branch.Children.Select(child => Interpret(grammar, child)));
                         break;
                     case EbnfNodeType.Or:
-                        rule = new OrRule(result, branch.Children.Select(child => Interpret(result, child)));
+                        rule = new OrRule(grammar, branch.Children.Select(child => Interpret(grammar, child)));
                         break;
 
                     case EbnfNodeType.None:
-                        rule = Interpret(result, branch.Children.Single());
+                        rule = Interpret(grammar, branch.Children.Single());
                         break;
 
                     case EbnfNodeType.Root:
@@ -220,7 +215,7 @@ namespace PseudoEBNF
                 switch ((EbnfNodeType)leaf.NodeType)
                 {
                     case EbnfNodeType.Identifier:
-                        rule = result.ReferenceRule(leaf.Value);
+                        rule = grammar.ReferenceRule(leaf.Value);
                         break;
 
                     case EbnfNodeType.String:
