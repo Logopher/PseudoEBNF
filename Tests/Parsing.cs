@@ -12,13 +12,10 @@ namespace Tests
     [TestClass]
     public class Parsing
     {
-        ParserGenerator parserGen;
+        private ParserGenerator parserGen;
 
         [TestInitialize]
-        public void Init()
-        {
-            parserGen = new ParserGenerator();
-        }
+        public void Init() => parserGen = new ParserGenerator();
 
         [TestMethod]
         public void SingleToken()
@@ -34,13 +31,14 @@ root = abc;
                 NestingType = Parser.NestingType.Stack,
                 Unit = Parser.Unit.Character,
             };
-            var parser = parserGen.SpawnParser(settings, grammar);
+            Parser parser = parserGen.SpawnParser(settings, grammar);
 
             parser.AttachAction("abc", (branch, recurse) =>
             {
                 var value = branch.Leaf.MatchedText;
+                var startIndex = branch.Leaf.StartIndex;
 
-                return new LeafSemanticNode(0, value);
+                return new LeafSemanticNode(0, startIndex, value);
             });
 
             parser.AttachAction("root", (branch, recurse) =>
@@ -50,7 +48,7 @@ root = abc;
 
             parser.Lock();
 
-            var result = parser.Parse("abc");
+            ISemanticNode result = parser.Parse("abc");
         }
 
         [TestMethod]
@@ -93,11 +91,13 @@ root = abc;
                 NestingType = Parser.NestingType.Stack,
                 Unit = Parser.Unit.Character,
             };
-            var parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
+            Parser parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
 
             parser.AttachAction(RuleName.Identifier, (branch, recurse) =>
             {
-                return new LeafSemanticNode((int)EbnfNodeType.Identifier, branch.Leaf.MatchedText);
+                var startIndex = branch.Leaf.StartIndex;
+
+                return new LeafSemanticNode((int)EbnfNodeType.Identifier, startIndex, branch.Leaf.MatchedText);
             });
 
             parser.AttachAction(RuleName.Literal, (branch, recurse) =>
@@ -128,6 +128,8 @@ root = abc;
 {RuleName.QuestionMark} = ""?"";
 {RuleName.ExclamationPoint} = ""!"";
 {RuleName.Semicolon} = "";"";
+{RuleName.LeftParenthesis} = ""("";
+{RuleName.RightParenthesis} = "")"";
 
 {RuleName.Whitespace} = /\s+/;
 {RuleName.Identifier} = /\w(?:\w|\d)*/;
@@ -141,26 +143,35 @@ root = abc;
 {RuleName.Repeat} = {RuleName.Asterisk} {RuleName.Expression};
 {RuleName.Group} = {RuleName.LeftParenthesis} {RuleName.Expression} {RuleName.RightParenthesis};
 
-{RuleName.Literal} = {RuleName.String} {RuleName.Pipe} {RuleName.Regex};
-{RuleName.SimpleExpression} = {RuleName.Not} {RuleName.Pipe} {RuleName.Optional} {RuleName.Pipe} {RuleName.Repeat} {RuleName.Pipe} {RuleName.Group};
-{RuleName.Expression} = {RuleName.Or} {RuleName.Pipe} {RuleName.And} {RuleName.Pipe} {RuleName.SimpleExpression};
+{RuleName.Literal} = {RuleName.String} | {RuleName.Regex};
+{RuleName.SimpleExpression} = {RuleName.Not} | {RuleName.Optional} | {RuleName.Repeat} | {RuleName.Group} | {RuleName.Identifier};
+{RuleName.Expression} = {RuleName.Or} | {RuleName.And} | {RuleName.SimpleExpression};
 
 {RuleName.Token} = {RuleName.Identifier} {RuleName.Equals} {RuleName.Literal} {RuleName.Semicolon};
 {RuleName.Rule} = {RuleName.Identifier} {RuleName.Equals} {RuleName.Expression} {RuleName.Semicolon};
 
-{RuleName.Assignment} = {RuleName.Token} {RuleName.Pipe} {RuleName.Rule};
-//{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
+{RuleName.Assignment} = {RuleName.Token} | {RuleName.Rule};
+// This is a comment.
 {RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
 ";
             var settings = new ParserSettings
             {
                 Algorithm = Parser.Algorithm.LL,
-                NestingType = Parser.NestingType.Stack,
-                Unit = Parser.Unit.Character,
+                NestingType = Parser.NestingType.Recursion,
+                Unit = Parser.Unit.Lexeme,
             };
-            var parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
+            Parser parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
 
-            parser.ToString();
+            parser.AttachAction(RuleName.Root, (branch, recurse) =>
+            {
+                return null;
+            });
+
+            parser.Lock();
+
+            ISemanticNode result = parser.Parse("a = b; c = d;");
+
+            result.ToString();
         }
 
         /*
@@ -186,11 +197,11 @@ root = abc;
         {
             var text = Standard.Text;
 
-            var parser = Standard.GetParser();
+            Parser parser = Standard.GetParser();
 
             parser.Lock();
 
-            var tree = parser.Parse(text);
+            ISemanticNode tree = parser.Parse(text);
         }
 
         [TestMethod]
@@ -198,11 +209,11 @@ root = abc;
         {
             var source = Resources.LoadString("Tests.Resources.angular-mocks.js");
 
-            var parser = Standard.GetParser();
+            Parser parser = Standard.GetParser();
 
             parser.Lock();
 
-            var tree = parser.Parse(source);
+            ISemanticNode tree = parser.Parse(source);
         }
     }
 }

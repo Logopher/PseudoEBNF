@@ -55,7 +55,7 @@ namespace PseudoEBNF.Parsing.Nodes
                     .Cast<BranchParseNode>()
                     .ToArray();
 
-                if (Branches.Count == 1)
+                if (Branches.Count == 1 && !(rule is RepeatRule))
                 {
                     if (rule is NamedRule)
                     {
@@ -97,6 +97,8 @@ namespace PseudoEBNF.Parsing.Nodes
             if (IsTwig)
             { return this; }
             else if (Rule is NamedRule)
+            { return this; }
+            else if (Rule is RepeatRule)
             { return this; }
             else if (Branches.Count == 1)
             { return Branches.Single().Unwrap(); }

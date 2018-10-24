@@ -17,8 +17,9 @@ namespace PseudoEBNF.PseudoEBNF
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
                 .Replace(@"\""", @"""");
+            var startIndex = branch.Leaf.StartIndex;
 
-            return new LeafSemanticNode((int)EbnfNodeType.String, text);
+            return new LeafSemanticNode((int)EbnfNodeType.String, startIndex, text);
         }
 
         internal static ISemanticNode Regex(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
@@ -30,15 +31,17 @@ namespace PseudoEBNF.PseudoEBNF
                 .Substring(1, text.Length - 2)
                 .Replace(@"\\", @"\")
                 .Replace(@"\/", @"/");
+            var startIndex = branch.Leaf.StartIndex;
 
-            return new LeafSemanticNode((int)EbnfNodeType.Regex, text);
+            return new LeafSemanticNode((int)EbnfNodeType.Regex, startIndex, text);
         }
 
         internal static ISemanticNode Identifier(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
             var text = branch.Leaf.MatchedText;
+            var startIndex = branch.Leaf.StartIndex;
 
-            return new LeafSemanticNode((int)EbnfNodeType.Identifier, text);
+            return new LeafSemanticNode((int)EbnfNodeType.Identifier, startIndex, text);
         }
 
         internal static ISemanticNode Unwrap(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
@@ -56,7 +59,7 @@ namespace PseudoEBNF.PseudoEBNF
             var name = recurse(branch.GetDescendant(0));
             var expr = recurse(branch.GetDescendant(2));
 
-            return new BranchSemanticNode((int)EbnfNodeType.Rule, new[] { name, expr });
+            return new BranchSemanticNode((int)EbnfNodeType.Rule, name.StartIndex, new[] { name, expr });
         }
 
         internal static ISemanticNode Token(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
@@ -64,7 +67,7 @@ namespace PseudoEBNF.PseudoEBNF
             var name = recurse(branch.GetDescendant(0));
             var expr = recurse(branch.GetDescendant(2));
 
-            return new BranchSemanticNode((int)EbnfNodeType.Token, new[] { name, expr });
+            return new BranchSemanticNode((int)EbnfNodeType.Token, name.StartIndex, new[] { name, expr });
         }
 
         internal static ISemanticNode Repeat(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
@@ -119,7 +122,7 @@ namespace PseudoEBNF.PseudoEBNF
                 .Select(recurse)
                 .ToArray();
 
-            return new BranchSemanticNode((int)EbnfNodeType.Root, children);
+            return new BranchSemanticNode((int)EbnfNodeType.Root, branch.StartIndex, children);
         }
 
         internal static ISemanticNode LineComment(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)

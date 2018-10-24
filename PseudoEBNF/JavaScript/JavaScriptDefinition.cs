@@ -1,7 +1,5 @@
 ﻿using System.Linq;
-using PseudoEBNF;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.JavaScript
@@ -11,10 +9,51 @@ namespace PseudoEBNF.JavaScript
         public static Parser GetParser()
         {
             var grammar = $@"
-functionKeyword = /(?<!\w)function(?!\w)/;
-varKeyword = /(?<!\w)var(?!\w)/;
-letKeyword = /(?<!\w)let(?!\w)/;
-newKeyword = /(?<!\w)new(?!\w)/;
+varKeyword = /\b(var)\b/;               // -/
+letKeyword = /\b(let)\b/;               // -/
+newKeyword = /\b(new)\b/;               // -/
+deleteKeyword = /\b(delete)\b/;         // X
+instanceofKeyword = /\b(instanceof)\b/; // X ?
+withKeyword = /\b(with)\b/;             // X
+voidKeyword = /\b(void)\b/;             // X
+typeofKeyword = /\b(typeof)\b/;         // X ?
+thisKeyword = /\b(this)\b/;             // X ?
+debuggerKeyword = /\b(debugger)\b/;     // X
+importKeyword = /\b(import)\b/;         // X
+classKeyword = /\b(class)\b/;           // X
+constKeyword = /\b(const)\b/;           // X
+extendsKeyword = /\b(extends)\b/;       // X
+yieldKeyword = /\b(yield)\b/;           // X
+superKeyword = /\b(super)\b/;           // X
+
+functionKeyword = /\b(function)\b/;     // -/
+tryKeyword = /\b(try)\b/;               // X ?
+catchKeyword = /\b(catch)\b/;           // X ?
+finallyKeyword = /\b(finally)\b/;       // X ?
+throwKeyword = /\b(throw)\b/;           // X ?
+returnKeyword = /\b(return)\b/;         // X ?
+
+ifKeyword = /\b(if)\b/;                 // X ?
+elseKeyword = /\b(else)\b/;             // X ?
+whileKeyword = /\b(while)\b/;           // X ?
+doKeyword = /\b(do)\b/;                 // X ?
+forKeyword = /\b(for)\b/;               // X ?
+inKeyword = /\b(in)\b/;                 // X ?
+switchKeyword = /\b(switch)\b/;         // X ?
+caseKeyword = /\b(case)\b/;             // X ?
+defaultKeyword = /\b(default)\b/;       // X ?
+breakKeyword = /\b(break)\b/;           // X ?
+continueKeyword = /\b(continue)\b/;     // X ?
+
+implementsKeyword = /\b(implements)\b/; // X
+interfaceKeyword = /\b(interface)\b/;   // X
+packageKeyword = /\b(package)\b/;       // X
+privateKeyword = /\b(private)\b/;       // X
+protectedKeyword = /\b(protected)\b/;   // X
+publicKeyword = /\b(public)\b/;         // X
+staticKeyword = /\b(static)\b/;         // X
+awaitKeyword = /\b(await)\b/;           // X
+enumKeyword = /\b(enum)\b/;             // X
 
 leftBracket = ""{{"";
 rightBracket = ""}}"";
@@ -46,8 +85,8 @@ lessThan = ""<"";
 greaterThan = "">"";
 
 ws = /\s+/;
-ident = /(?:\$|\w)(?:\$|\w|\d)*/;
-number = /\d+(?:\.\d+)?/;
+ident = /\b[$A-Za-z_][$A-Za-z_0-9]*\b/;
+number = /\b\d+(?:\.\d+)?\b/;
 doubleString = /""(?:\\\\""|\\\\[^""]|[^""\\\\])*""/;
 singleString = /'(?:\\\\'|\\\\[^']|[^'\\\\])*'/;
 regex = /\/(?:\\\\\/|\\\\|[^\/])+\/[A-Za-z]*/;
@@ -77,12 +116,21 @@ bitXor = ""^"";
 
 question = ""?"";
 
+basicKeywords = varKeyword | letKeyword | newKeyword | deleteKeyword | instanceofKeyword | withKeyword | voidKeyword | typeofKeyword | thisKeyword | debuggerKeyword | importKeyword | classKeyword | constKeyword | extendsKeyword | yieldKeyword | superKeyword;
+functionLevelKeywords = functionKeyword | tryKeyword | catchKeyword | finallyKeyword | throwKeyword | returnKeyword;
+controlKeywords = ifKeyword | elseKeyword | whileKeyword | doKeyword | forKeyword | inKeyword | switchKeyword | caseKeyword | defaultKeyword | breakKeyword | continueKeyword;
+futureKeywords = implementsKeyword | interfaceKeyword | packageKeyword | privateKeyword | protectedKeyword | publicKeyword | staticKeyword | awaitKeyword | enumKeyword;
+
+validIdent = im !(basicKeywords | functionLevelKeywords | controlKeywords | futureKeywords) ident;
+
 string = doubleString | singleString;
 
 paren = leftParen superExpr rightParen;
 
 unaryOper = minus | plus;
 unaryMath = unaryOper *unaryOper expr;
+
+typeof = typeofKeyword expr;
 
 mathOper = minus | plus | times | divide;
 math = simpleExpr mathOper expr;
@@ -95,15 +143,18 @@ bitOper = bitAnd | bitOr | bitXor;
 bitNegation = bitNot expr;
 bitwise = simpleExpr bitOper expr;
 
+instanceof = expr instanceofKeyword superExpr;
+in = validIdent inKeyword superExpr;
+
 block = leftBracket *statement rightBracket;
-paramList = leftParen ?(ident *(comma ident)) rightParen;
-namedFunction = functionKeyword ident paramList block;
+paramList = leftParen ?(validIdent *(comma validIdent)) rightParen;
+namedFunction = functionKeyword validIdent paramList block;
 anonFunction = functionKeyword paramList block;
 
-propertyDef = (ident | string) colon superExpr;
+propertyDef = (validIdent | string) colon superExpr;
 object = leftBracket ?(propertyDef *(comma propertyDef)) rightBracket;
 
-dotRef = dot ident;
+dotRef = dot validIdent;
 key = leftSquare superExpr rightSquare;
 argList = leftParen ?(superExpr *(comma superExpr)) rightParen;
 expressionFragment = dotRef | key | argList;
@@ -119,17 +170,35 @@ compositeExpression = simpleExpr (dotRefExpression | keyExpression);
 ternary = expr question superExpr colon superExpr; 
 
 assignOper = equals | minusEquals | plusEquals | timesEquals | divideEquals | modulusEquals | bitAndEquals | bitOrEquals | bitXorEquals;
-localAssignment = ident assignOper superExpr;
+localAssignment = validIdent assignOper superExpr;
 propertyAssignment = simpleExpr (dotRefExpression | keyExpression) assignOper superExpr;
 assignment = localAssignment | propertyAssignment;
 
-variable = localAssignment | ident;
+variable = localAssignment | validIdent;
 variableDecl = (varKeyword | letKeyword) variable *(comma variable) ?semicolon;
 
-simpleExpr = anonFunction | ident | number | string | paren | unaryMath | logicNegation | bitNegation | object;
-expr = math | logic | bitwise | constructor | functionCall | compositeExpression | simpleExpr;
+break = breakKeyword ?semicolon;
+continue = continueKeyword ?semicolon;
+return = returnKeyword ?superExpr ?semicolon;
+throw = throwKeyword ?superExpr ?semicolon;
+catch = catchKeyword block;
+finally = finallyKeyword block;
+try = tryKeyword block catch *catch ?finally;
+
+default = defaultKeyword colon *statement;
+case = caseKeyword (string | number | (validIdent *dotRef)) colon *statement;
+switch = switchKeyword leftBracket *case ?default *case rightBracket;
+
+else = elseKeyword statement;
+if = ifKeyword statement ?else;
+while = whileKeyword paren statement;
+doWhile = doKeyword statement whileKeyword paren ?semicolon;
+for = forKeyword leftParen ((variableDecl | superExpr) semicolon superExpr semicolon superExpr) rightParen statement;
+
+simpleExpr = thisKeyword | anonFunction | validIdent | number | string | paren | unaryMath | logicNegation | bitNegation | object;
+expr = math | logic | instanceof | in | bitwise | constructor | functionCall | compositeExpression | simpleExpr;
 superExpr = ternary | assignment | expr;
-statement = namedFunction | block | semicolon | variableDecl | (superExpr ?semicolon);
+statement = return | if | while | doWhile | forIn | for | switch | namedFunction | block | semicolon | variableDecl | (superExpr ?semicolon);
 
 root = statement *statement;
 ";
@@ -190,7 +259,7 @@ root = statement *statement;
                 BranchParseNode args = branch.GetDescendant(1);
 
                 if (args.Elements.Count == 0)
-                { return new BranchSemanticNode((int)JsNodeType.ArgumentList, new ISemanticNode[0]); }
+                { return new BranchSemanticNode((int)JsNodeType.ArgumentList, branch.StartIndex, new ISemanticNode[0]); }
 
                 ISemanticNode first = recurse(args.GetDescendant(0));
                 ISemanticNode[] rest = args
@@ -199,7 +268,7 @@ root = statement *statement;
                     .Select(n => recurse(n.GetDescendant(1)))
                     .ToArray();
 
-                return new BranchSemanticNode((int)JsNodeType.ArgumentList, new[] { first }.Concat(rest));
+                return new BranchSemanticNode((int)JsNodeType.ArgumentList, branch.StartIndex, new[] { first }.Concat(rest));
             });
 
             parser.AttachAction("dotRef", (branch, recurse) =>
@@ -227,7 +296,7 @@ root = statement *statement;
                 BranchParseNode firstNode = branch.GetDescendant(1, 0);
 
                 if (firstNode == null)
-                { return new BranchSemanticNode((int)JsNodeType.Object, new ISemanticNode[0]); }
+                { return new BranchSemanticNode((int)JsNodeType.Object, firstNode.StartIndex, new ISemanticNode[0]); }
 
                 ISemanticNode first = recurse(firstNode);
                 ISemanticNode[] rest = branch.GetDescendant(1, 1)
@@ -281,7 +350,7 @@ root = statement *statement;
                     .Select(recurse)
                     .ToArray();
 
-                return new BranchSemanticNode((int)JsNodeType.Block, stmts);
+                return new BranchSemanticNode((int)JsNodeType.Block, branch.StartIndex, stmts);
             });
 
             parser.AttachAction("bitwise", (branch, recurse) =>
@@ -339,8 +408,9 @@ root = statement *statement;
             parser.AttachAction("ident", (branch, recurse) =>
             {
                 var ident = branch.Leaf.MatchedText;
+                var startIndex = branch.Leaf.StartIndex;
 
-                return new LeafSemanticNode((int)JsNodeType.Identifier, ident);
+                return new LeafSemanticNode((int)JsNodeType.Identifier, startIndex, ident);
             });
 
             parser.AttachAction("doubleString", (branch, recurse) =>
@@ -350,8 +420,9 @@ root = statement *statement;
                     .Substring(1, text.Length - 2)
                     .Replace(@"\\", @"\")
                     .Replace(@"\""", @"""");
+                var startIndex = branch.Leaf.StartIndex;
 
-                return new LeafSemanticNode((int)JsNodeType.String, text);
+                return new LeafSemanticNode((int)JsNodeType.String, startIndex, text);
             });
 
             parser.AttachAction("singleString", (branch, recurse) =>
@@ -361,8 +432,9 @@ root = statement *statement;
                     .Substring(1, text.Length - 2)
                     .Replace(@"\\", @"\")
                     .Replace(@"\'", @"'");
+                var startIndex = branch.Leaf.StartIndex;
 
-                return new LeafSemanticNode((int)JsNodeType.String, text);
+                return new LeafSemanticNode((int)JsNodeType.String, startIndex, text);
             });
 
             parser.AttachAction("string", RuleActions.Unwrap);
@@ -374,15 +446,17 @@ root = statement *statement;
                     .Substring(1, pattern.Length - 2)
                     .Replace(@"\\", @"\")
                     .Replace(@"\/", @"/");
+                var startIndex = branch.Leaf.StartIndex;
 
-                return new LeafSemanticNode((int)JsNodeType.RegularExpression, pattern);
+                return new LeafSemanticNode((int)JsNodeType.RegularExpression, startIndex, pattern);
             });
 
             parser.AttachAction("number", (branch, recurse) =>
             {
                 var number = branch.Leaf.MatchedText;
+                var startIndex = branch.Leaf.StartIndex;
 
-                return new LeafSemanticNode((int)JsNodeType.Number, number);
+                return new LeafSemanticNode((int)JsNodeType.Number, startIndex, number);
             });
 
             parser.AttachAction("superExpr", RuleActions.Unwrap);

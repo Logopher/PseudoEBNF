@@ -17,7 +17,7 @@ namespace PseudoEBNF.Parsing.Rules
         public Grammar Grammar { get; }
 
         public override StackParser.Action SuccessAction { get; } = StackParser.Action.Cancel;
-        public override StackParser.Action FailureAction { get; } = StackParser.Action.NextSibling;
+        public override StackParser.Action FailureAction { get; } = StackParser.Action.NextChild;
         public override IReadOnlyList<Rule> Children { get; }
 
         public NotRule(Compatible c, Rule rule)

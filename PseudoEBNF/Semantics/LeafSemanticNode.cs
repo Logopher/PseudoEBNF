@@ -9,11 +9,14 @@ namespace PseudoEBNF.Semantics
     {
         public int NodeType { get; }
 
+        public int StartIndex { get; }
+
         public string Value { get; }
 
-        public LeafSemanticNode(int nodeType, string value)
+        public LeafSemanticNode(int nodeType, int index, string value)
         {
             NodeType = nodeType;
+            StartIndex = index;
             Value = value;
         }
     }

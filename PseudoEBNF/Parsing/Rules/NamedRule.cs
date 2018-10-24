@@ -78,7 +78,7 @@ namespace PseudoEBNF.Parsing.Rules
             }
             else
             {
-                return new BranchSemanticNode(0, children);
+                return new BranchSemanticNode(0, branch.StartIndex, children);
             }
         }
 
