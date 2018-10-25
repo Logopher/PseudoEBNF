@@ -125,62 +125,72 @@ validIdent = im !(basicKeywords | functionLevelKeywords | controlKeywords | futu
 
 string = doubleString | singleString;
 
-paren = leftParen superExpr rightParen;
+paren = leftParen expr3 rightParen;
 
 unaryOper = minus | plus;
-unaryMath = unaryOper *unaryOper expr;
+unaryMath = unaryOper *unaryOper expr2;
 
-typeof = typeofKeyword expr;
-
-mathOper = minus | plus | times | divide;
-math = simpleExpr mathOper expr;
-
-logicOper = and | or;
-logicNegation = not expr;
-logic = simpleExpr logicOper expr;
-
-bitOper = bitAnd | bitOr | bitXor;
-bitNegation = bitNot expr;
-bitwise = simpleExpr bitOper expr;
-
-instanceof = expr instanceofKeyword superExpr;
-in = validIdent inKeyword superExpr;
+typeof = typeofKeyword expr2;
 
 block = leftBracket *statement rightBracket;
 paramList = leftParen ?(validIdent *(comma validIdent)) rightParen;
 namedFunction = functionKeyword validIdent paramList block;
 anonFunction = functionKeyword paramList block;
 
-propertyDef = (validIdent | string) colon superExpr;
+propertyDef = (validIdent | string) colon expr3;
 object = leftBracket ?(propertyDef *(comma propertyDef)) rightBracket;
 
 dotRef = dot validIdent;
-key = leftSquare superExpr rightSquare;
-argList = leftParen ?(superExpr *(comma superExpr)) rightParen;
+key = leftSquare expr3 rightSquare;
+argList = leftParen ?(expr3 *(comma expr3)) rightParen;
 expressionFragment = dotRef | key | argList;
 
 dotRefExpression = (expressionFragment dotRefExpression) | dotRef;
 keyExpression = (expressionFragment keyExpression) | key;
 argListExpression = (expressionFragment argListExpression) | argList;
 
-functionCall = simpleExpr argListExpression;
 constructor = newKeyword functionCall;
-compositeExpression = simpleExpr (dotRefExpression | keyExpression);
 
-ternary = expr question superExpr colon superExpr; 
+// == END expr0 DEFINITIONS ==
+
+functionCall = expr0 argListExpression;
+propertyReference = expr0 (dotRefExpression | keyExpression);
+
+// == END expr1 definitions ==
+
+mathOper = minus | plus | times | divide;
+math = expr1 mathOper expr2;
+
+logicOper = and | or;
+logicNegation = not expr2;
+logic = expr1 logicOper expr2;
+
+bitOper = bitAnd | bitOr | bitXor;
+bitNegation = bitNot expr2;
+bitwise = expr1 bitOper expr2;
+
+instanceof = expr1 instanceofKeyword expr3;
+in = expr1 inKeyword expr3;
+
+// == END expr2 DEFINITIONS ==
 
 assignOper = equals | minusEquals | plusEquals | timesEquals | divideEquals | modulusEquals | bitAndEquals | bitOrEquals | bitXorEquals;
-localAssignment = validIdent assignOper superExpr;
-propertyAssignment = simpleExpr (dotRefExpression | keyExpression) assignOper superExpr;
+localAssignment = validIdent assignOper expr3;
+propertyAssignment = propertyReference assignOper expr3;
 assignment = localAssignment | propertyAssignment;
 
-variable = localAssignment | validIdent;
-variableDecl = (varKeyword | letKeyword) variable *(comma variable) ?semicolon;
+ternary = expr2 question expr3 colon expr3;
 
-break = breakKeyword ?semicolon;
-continue = continueKeyword ?semicolon;
-return = returnKeyword ?superExpr ?semicolon;
-throw = throwKeyword ?superExpr ?semicolon;
+// == END expr3 DEFINITIONS ==
+
+variable = localAssignment | validIdent;
+variableDecl = (varKeyword | letKeyword) variable *(comma variable);
+
+break = breakKeyword;
+continue = continueKeyword;
+return = returnKeyword ?expr3;
+throw = throwKeyword ?expr3;
+delete = deleteKeyword propertyReference;
 catch = catchKeyword block;
 finally = finallyKeyword block;
 try = tryKeyword block catch *catch ?finally;
@@ -193,12 +203,14 @@ else = elseKeyword statement;
 if = ifKeyword statement ?else;
 while = whileKeyword paren statement;
 doWhile = doKeyword statement whileKeyword paren ?semicolon;
-for = forKeyword leftParen ((variableDecl | superExpr) semicolon superExpr semicolon superExpr) rightParen statement;
+for = forKeyword leftParen ((variableDecl | expr3) semicolon expr3 semicolon expr3) rightParen statement;
 
-simpleExpr = thisKeyword | anonFunction | validIdent | number | string | paren | unaryMath | logicNegation | bitNegation | object;
-expr = math | logic | instanceof | in | bitwise | constructor | functionCall | compositeExpression | simpleExpr;
-superExpr = ternary | assignment | expr;
-statement = return | if | while | doWhile | forIn | for | switch | namedFunction | block | semicolon | variableDecl | (superExpr ?semicolon);
+expr0 = thisKeyword | anonFunction | validIdent | number | string | paren | unaryMath | logicNegation | bitNegation | constructor | object;
+expr1 = functionCall | propertyReference | expr0;
+expr2 = math | logic | instanceof | in | bitwise | expr1;
+expr3 = ternary | assignment | expr2;
+blockStatement = if | while | doWhile | forIn | for | switch | namedFunction | block;
+statement = blockStatement | ((variableDecl | break | continue | return | throw | delete | expr3) ?semicolon) | semicolon;
 
 root = statement *statement;
 ";
@@ -245,14 +257,14 @@ root = statement *statement;
             parser.AttachAction("localAssignment", (branch, recurse) =>
             {
                 ISemanticNode lvalue = recurse(branch.GetDescendant(0));
-                ISemanticNode expr = recurse(branch.GetDescendant(2));
+                ISemanticNode expr2 = recurse(branch.GetDescendant(2));
 
-                return new BranchSemanticNode((int)JsNodeType.Assignment, lvalue, expr);
+                return new BranchSemanticNode((int)JsNodeType.Assignment, lvalue, expr2);
             });
 
             parser.AttachAction("propertyAssignment", RuleActions.PropertyAssignment);
 
-            parser.AttachAction("compositeExpression", RuleActions.CompositeExpression);
+            parser.AttachAction("propertyReference", RuleActions.CompositeExpression);
 
             parser.AttachAction("argList", (branch, recurse) =>
             {
@@ -296,7 +308,7 @@ root = statement *statement;
                 BranchParseNode firstNode = branch.GetDescendant(1, 0);
 
                 if (firstNode == null)
-                { return new BranchSemanticNode((int)JsNodeType.Object, firstNode.StartIndex, new ISemanticNode[0]); }
+                { return new BranchSemanticNode((int)JsNodeType.Object, branch.StartIndex, new ISemanticNode[0]); }
 
                 ISemanticNode first = recurse(firstNode);
                 ISemanticNode[] rest = branch.GetDescendant(1, 1)
@@ -304,7 +316,7 @@ root = statement *statement;
                     .Select(n => recurse(n.GetDescendant(1)))
                     .ToArray();
 
-                return new BranchSemanticNode((int)JsNodeType.Object, first, rest);
+                return new BranchSemanticNode((int)JsNodeType.Object, branch.StartIndex, first, rest);
             });
 
             parser.AttachAction("propertyDef", (branch, recurse) =>
@@ -405,8 +417,10 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Parenthetical, operand);
             });
 
-            parser.AttachAction("ident", (branch, recurse) =>
+            parser.AttachAction("validIdent", (branch, recurse) =>
             {
+                branch = branch.GetDescendant(1);
+
                 var ident = branch.Leaf.MatchedText;
                 var startIndex = branch.Leaf.StartIndex;
 
@@ -459,9 +473,10 @@ root = statement *statement;
                 return new LeafSemanticNode((int)JsNodeType.Number, startIndex, number);
             });
 
-            parser.AttachAction("superExpr", RuleActions.Unwrap);
-            parser.AttachAction("expr", RuleActions.Unwrap);
-            parser.AttachAction("simpleExpr", RuleActions.Unwrap);
+            parser.AttachAction("expr0", RuleActions.Unwrap);
+            parser.AttachAction("expr1", RuleActions.Unwrap);
+            parser.AttachAction("expr2", RuleActions.Unwrap);
+            parser.AttachAction("expr3", RuleActions.Unwrap);
             parser.AttachAction("assignment", RuleActions.Unwrap);
             //*/
 

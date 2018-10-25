@@ -51,5 +51,43 @@ namespace PseudoEBNF.Parsing.Rules
         }
 
         public abstract Match<IParseNode> Match(List<Lexeme> lexemes);
+
+        public Parser GetParser(string input, int inputIndex)
+        {
+            return new Parser(this, input, inputIndex);
+        }
+
+        public class Parser
+        {
+            public string Input { get; }
+            public Rule Rule { get; }
+            public List<IParseNode> Nodes { get; } = new List<IParseNode>();
+
+            public bool IsFull => Rule.IsFull(Nodes);
+            public bool IsComplete => Rule.IsComplete(Nodes);
+            public bool IsExhausted => Rule.IsExhausted(RuleIndex);
+
+            public int InputIndex { get; }
+            public int RuleIndex { get; private set; } = 0;
+
+            internal Parser(Rule rule, string input, int inputIndex)
+            {
+                Rule = rule;
+                Input = input;
+                InputIndex = inputIndex;
+            }
+
+            internal void AddNode(IParseNode node)
+            {
+                if (node.Rule != PeekRule())
+                { throw new Exception(); }
+
+                Nodes.Add(node);
+            }
+
+            internal Rule PeekRule() => Rule.GetChild(RuleIndex);
+
+            internal Rule PopRule() => Rule.GetChild(RuleIndex++);
+        }
     }
 }

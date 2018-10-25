@@ -33,14 +33,10 @@ namespace PseudoEBNF.JavaScript
 
         internal static ISemanticNode PropertyAssignment(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
-            var first = recurse(branch.GetDescendant(0));
+            var lvalue = recurse(branch.GetDescendant(0));
+            var rvalue = recurse(branch.GetDescendant(2));
 
-            var fragments = branch.GetDescendant(1);
-            
-            var lvalue = CompositeExpression(first, fragments, recurse);
-            var expr = recurse(branch.GetDescendant(3));
-
-            return new BranchSemanticNode((int)JsNodeType.Assignment, lvalue, expr);
+            return new BranchSemanticNode((int)JsNodeType.Assignment, lvalue, rvalue);
         }
 
         static List<ISemanticNode> ExpressionFragments(BranchParseNode fragments, Func<BranchParseNode, ISemanticNode> recurse)

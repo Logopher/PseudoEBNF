@@ -11,6 +11,8 @@ using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.Parsing.Parsers
 {
+    using StackFrame = Rule.Parser;
+
     public class StackParser : Parser
     {
         private enum Operation
@@ -107,7 +109,7 @@ namespace PseudoEBNF.Parsing.Parsers
 
         public override BranchParseNode ParseSyntax(string input)
         {
-            PushFrame(Index, Grammar.RootRule);
+            PushFrame(Grammar.RootRule, input, Index);
 
             while (true)
             {
@@ -129,14 +131,14 @@ namespace PseudoEBNF.Parsing.Parsers
                     switch (LastOperation)
                     {
                         case Operation.Build:
-                            PushFrame(Index, Head.PopRule());
+                            PushFrame(Head.PopRule(), input, Index);
                             success = true;
                             break;
                         case Operation.Cancel:
                             success = false;
                             break;
                         case Operation.Push:
-                            PushFrame(Index, Head.PopRule());
+                            PushFrame(Head.PopRule(), input, Index);
                             continue;
                         default:
                             throw new Exception();
@@ -157,14 +159,14 @@ namespace PseudoEBNF.Parsing.Parsers
 
                             AddNodeToHead(BuildNode(true));
 
-                            PushFrame(Index, Head.PopRule());
+                            PushFrame(Head.PopRule(), input, Index);
                         }
                         break;
                     case Action.NextChild:
                         {
                             AddNodeToHead(child);
 
-                            PushFrame(Index, Head.PopRule());
+                            PushFrame(Head.PopRule(), input, Index);
                         }
                         break;
                     case Action.Cancel:
@@ -178,22 +180,25 @@ namespace PseudoEBNF.Parsing.Parsers
         {
             StackFrame removedFrame = PopFrame();
 
-            char symbol;
             BranchParseNode result;
             if (success)
             {
                 LastOperation = Operation.Build;
-                symbol = '+';
                 result = new BranchParseNode(removedFrame.Rule, removedFrame.InputIndex, removedFrame.Nodes);
+
+                if (removedFrame.Rule is NamedRule named)
+                { Super.ReportSuccess(named, result.MatchedText); }
             }
             else
             {
                 LastOperation = Operation.Cancel;
-                symbol = '-';
                 result = null;
+
+                if (removedFrame.Rule is NamedRule named)
+                { Super.ReportFailure(named); }
             }
 
-            Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}{symbol} {removedFrame.Rule}");
+            //Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}{symbol} {removedFrame.Rule}");
 
             return result;
         }
@@ -234,17 +239,24 @@ namespace PseudoEBNF.Parsing.Parsers
             return result;
         }
 
-        private void PushFrame(int startIndex, Rule rule)
+        private void PushFrame(Rule rule, string input, int startIndex)
         {
             if (rule == null)
             { return; }
 
-            PushFrame(new StackFrame(startIndex, rule));
+            PushFrame(rule.GetParser(input, startIndex));
         }
 
         private void PushFrame(StackFrame frame)
         {
-            Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}? {frame.Rule}");
+            if (Stack.Any(f => f.Rule == frame.Rule && f.InputIndex == frame.InputIndex))
+            { throw new Exception(); }
+
+            if (frame.Rule is NamedRule named)
+            {
+                Super.ReportHypothesis(named, Index);
+            }
+            //Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}? {frame.Rule}");
             Stack.Add(frame);
             head = frame;
             LastOperation = Operation.Push;
@@ -256,36 +268,6 @@ namespace PseudoEBNF.Parsing.Parsers
             { throw new Exception(); }
 
             Grammar.AttachAction(name, action);
-        }
-
-        private class StackFrame
-        {
-            public Rule Rule { get; }
-            public List<IParseNode> Nodes { get; } = new List<IParseNode>();
-            public bool IsFull => Rule.IsFull(Nodes);
-            public bool IsComplete => Rule.IsComplete(Nodes);
-            public bool IsExhausted => Rule.IsExhausted(RuleIndex);
-
-            public int InputIndex { get; }
-            public int RuleIndex { get; private set; } = 0;
-
-            public StackFrame(int startIndex, Rule rule)
-            {
-                InputIndex = startIndex;
-                Rule = rule ?? throw new Exception();
-            }
-
-            internal void AddNode(IParseNode node)
-            {
-                if (node.Rule != PeekRule())
-                { throw new Exception(); }
-
-                Nodes.Add(node);
-            }
-
-            internal Rule PeekRule() => Rule.GetChild(RuleIndex);
-
-            internal Rule PopRule() => Rule.GetChild(RuleIndex++);
         }
     }
 }
