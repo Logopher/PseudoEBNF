@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
@@ -120,6 +119,9 @@ namespace PseudoEBNF.Parsing.Parsers
                     Match<IParseNode> match = token.Match(input, Index);
 
                     success = match.Success;
+
+                    PopFrame();
+
                     AddNodeToHead(match.Result);
                 }
                 else if (Head.IsFull || Head.IsExhausted)
@@ -206,7 +208,7 @@ namespace PseudoEBNF.Parsing.Parsers
         private void AddNodeToHead(IParseNode node)
         {
             if (node != null)
-            { Head.Nodes.Add(node); }
+            { Head.AddNode(node); }
         }
 
         private StackFrame PopFrame()

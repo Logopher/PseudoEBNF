@@ -48,17 +48,17 @@ namespace PseudoEBNF.Parsing.Rules
             return new Match<IParseNode>(null, false);
         }
 
-        public override bool IsFull(IReadOnlyList<IParseNode> nodes)
+        public override bool IsFull(Parser p)
         {
             throw new Exception();
         }
 
-        public override bool IsComplete(IReadOnlyList<IParseNode> nodes)
+        public override bool IsComplete(Parser p)
         {
             throw new Exception();
         }
 
-        public override bool IsExhausted(int ruleIndex)
+        public override bool IsExhausted(Parser p)
         {
             throw new Exception();
         }

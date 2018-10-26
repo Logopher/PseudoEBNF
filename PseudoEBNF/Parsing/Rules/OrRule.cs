@@ -46,19 +46,19 @@ namespace PseudoEBNF.Parsing.Rules
             return new OrRule(this, Children.Select(n => n.Clone()));
         }
 
-        public override bool IsFull(IReadOnlyList<IParseNode> nodes)
+        public override bool IsFull(Parser p)
         {
-            return nodes.Count == 1;
+            return p.Nodes.Count == 1;
         }
 
-        public override bool IsComplete(IReadOnlyList<IParseNode> nodes)
+        public override bool IsComplete(Parser p)
         {
-            return nodes.Count == 1;
+            return p.Nodes.Count == 1;
         }
 
-        public override bool IsExhausted(int ruleIndex)
+        public override bool IsExhausted(Parser p)
         {
-            return Children.Count <= ruleIndex;
+            return Children.Count <= p.RuleIndex;
         }
 
         public override string ToString()

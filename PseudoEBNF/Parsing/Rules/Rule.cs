@@ -1,9 +1,9 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Collections.Generic;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Parsers;
-using System;
-using System.Collections.Generic;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -17,45 +17,30 @@ namespace PseudoEBNF.Parsing.Rules
         public virtual StackParser.Action SuccessAction { get; } = StackParser.Action.NextChild;
         public virtual StackParser.Action FailureAction { get; } = StackParser.Action.Cancel;
 
-        public virtual bool IsFull(IReadOnlyList<IParseNode> nodes)
-        {
-            return Children.Count == nodes.Count;
-        }
+        public virtual bool IsFull(Parser p) => Children.Count == p.Nodes.Count;
 
-        public virtual bool IsComplete(IReadOnlyList<IParseNode> nodes)
-        {
-            return Children.Count == nodes.Count;
-        }
+        public virtual bool IsComplete(Parser p) => Children.Count == p.Nodes.Count;
 
-        public virtual bool IsExhausted(int ruleIndex)
-        {
-            return Children.Count <= ruleIndex;
-        }
+        public virtual bool IsExhausted(Parser p) => Children.Count <= p.RuleIndex;
 
         public abstract IReadOnlyList<Rule> Children { get; }
         public int ChildCount => Children.Count;
 
-        public virtual Rule GetChild(int index)
+        public virtual Rule GetChild(Parser p)
         {
-            if (IsExhausted(index))
+            if (IsExhausted(p))
             { return null; }
 
-            return Children[index];
+            return Children[p.RuleIndex];
         }
 
         public abstract Rule Clone();
 
-        public override string ToString()
-        {
-            return $"{{rule {string.Join(" ", Children)}}}";
-        }
+        public override string ToString() => $"{{rule {string.Join(" ", Children)}}}";
 
         public abstract Match<IParseNode> Match(List<Lexeme> lexemes);
 
-        public Parser GetParser(string input, int inputIndex)
-        {
-            return new Parser(this, input, inputIndex);
-        }
+        public Parser GetParser(string input, int inputIndex) => new Parser(this, input, inputIndex);
 
         public class Parser
         {
@@ -63,12 +48,14 @@ namespace PseudoEBNF.Parsing.Rules
             public Rule Rule { get; }
             public List<IParseNode> Nodes { get; } = new List<IParseNode>();
 
-            public bool IsFull => Rule.IsFull(Nodes);
-            public bool IsComplete => Rule.IsComplete(Nodes);
-            public bool IsExhausted => Rule.IsExhausted(RuleIndex);
+            public bool IsFull => Rule.IsFull(this);
+            public bool IsComplete => Rule.IsComplete(this);
+            public bool IsExhausted => Rule.IsExhausted(this);
 
             public int InputIndex { get; }
             public int RuleIndex { get; private set; } = 0;
+
+            public Rule PreviousRule { get; private set; }
 
             internal Parser(Rule rule, string input, int inputIndex)
             {
@@ -79,15 +66,24 @@ namespace PseudoEBNF.Parsing.Rules
 
             internal void AddNode(IParseNode node)
             {
-                if (node.Rule != PeekRule())
+                if (node.Rule != PreviousRule)
                 { throw new Exception(); }
 
                 Nodes.Add(node);
             }
 
-            internal Rule PeekRule() => Rule.GetChild(RuleIndex);
+            internal Rule PeekRule() => Rule.GetChild(this);
 
-            internal Rule PopRule() => Rule.GetChild(RuleIndex++);
+            internal Rule PopRule()
+            {
+                Rule result = PeekRule();
+
+                RuleIndex++;
+
+                PreviousRule = result;
+
+                return result;
+            }
         }
     }
 }

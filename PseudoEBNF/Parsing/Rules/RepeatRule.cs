@@ -38,22 +38,22 @@ namespace PseudoEBNF.Parsing.Rules
             return new RepeatRule(this, Rule.Clone());
         }
 
-        public override bool IsFull(IReadOnlyList<IParseNode> nodes)
+        public override bool IsFull(Parser p)
         {
             return false;
         }
 
-        public override bool IsComplete(IReadOnlyList<IParseNode> nodes)
+        public override bool IsComplete(Parser p)
         {
             return true;
         }
 
-        public override bool IsExhausted(int ruleIndex)
+        public override bool IsExhausted(Parser p)
         {
             return false;
         }
 
-        public override Rule GetChild(int index)
+        public override Rule GetChild(Parser p)
         {
             return Rule;
         }
