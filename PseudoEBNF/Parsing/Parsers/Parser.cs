@@ -1,9 +1,10 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
+using PseudoEBNF.Reporting;
 using PseudoEBNF.Semantics;
-using System;
 
 namespace PseudoEBNF
 {
@@ -26,36 +27,108 @@ namespace PseudoEBNF
             Character,
         }
 
-        public abstract Grammar Grammar { get; }
+        public Supervisor Super { get; }
+        public Grammar Grammar { get; }
+        public bool IsLocked => Grammar.IsLocked;
 
         public Parser()
-            : base(Guid.NewGuid())
-        { }
+            : this(new Grammar())
+        {
+        }
 
-        public Parser(Compatible c)
-            : base(c)
-        { }
+        public Parser(Grammar g)
+            : base(g)
+        {
+            Grammar = g;
+            Super = Grammar.Super;
+        }
+        
+        public ISemanticNode Parse(string input)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
 
-        public abstract void Lock();
+            BranchParseNode parseTree = ParseSyntax(input);
 
-        public abstract ISemanticNode Parse(string input);
+            ISemanticNode semanticTree = ParseSemantics(parseTree);
 
-        public abstract NamedRule GetRule(string name);
-
-        public abstract Token GetToken(string name);
+            return semanticTree;
+        }
 
         public abstract BranchParseNode ParseSyntax(string input);
 
         public abstract ISemanticNode ParseSemantics(BranchParseNode node);
 
-        public abstract NameRule ReferenceRule(string name);
+        public void DefineRule(string name, Rule rule)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
 
-        public abstract void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action);
+            Grammar.DefineRule(name, rule);
+        }
 
-        public abstract void SetImplicit(string name);
+        public void DefineString(string name, string value)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
 
-        public abstract void DefineRegex(string name, string value);
+            Grammar.DefineString(name, value);
+        }
 
-        public abstract void DefineString(string name, string value);
+        public void DefineRegex(string name, string value)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineRegex(name, value);
+        }
+
+        public void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.AttachAction(name, action);
+        }
+
+        public void SetImplicit(string name)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.SetImplicit(name);
+        }
+
+        public void Lock()
+        {
+            if (!IsLocked)
+            {
+                Grammar.Lock();
+            }
+        }
+
+        public NamedRule GetRule(string name)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
+
+            return Grammar.GetRule(name);
+        }
+
+        public Token GetToken(string name)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
+
+            return Grammar.GetToken(name);
+        }
+
+        public NameRule ReferenceRule(string name)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            return Grammar.ReferenceRule(name);
+        }
     }
 }

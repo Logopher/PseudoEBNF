@@ -28,10 +28,6 @@ namespace PseudoEBNF.Parsing.Parsers
             Cancel,
         }
 
-        public Supervisor Super { get; }
-        public override Grammar Grammar { get; }
-        public bool IsLocked => Grammar.IsLocked;
-
         private List<StackFrame> Stack { get; } = new List<StackFrame>();
 
         private bool HasMoreFrames => 0 < Stack.Count;
@@ -47,52 +43,6 @@ namespace PseudoEBNF.Parsing.Parsers
         public StackParser(Grammar grammar)
             : base(grammar)
         {
-            Super = grammar.Super;
-            Grammar = grammar;
-        }
-
-        public override void Lock()
-        {
-            if (!IsLocked)
-            {
-                Grammar.Lock();
-            }
-        }
-
-        public override NamedRule GetRule(string name)
-        {
-            if (!IsLocked)
-            { throw new Exception(); }
-
-            return Grammar.GetRule(name);
-        }
-
-        public override Token GetToken(string name)
-        {
-            if (!IsLocked)
-            { throw new Exception(); }
-
-            return Grammar.GetToken(name);
-        }
-
-        public override NameRule ReferenceRule(string name)
-        {
-            if (IsLocked)
-            { throw new Exception(); }
-
-            return new NameRule(this, Grammar, name);
-        }
-
-        public override ISemanticNode Parse(string input)
-        {
-            if (!IsLocked)
-            { throw new Exception(); }
-
-            BranchParseNode parseTree = ParseSyntax(input);
-
-            ISemanticNode semanticTree = ParseSemantics(parseTree);
-
-            return semanticTree;
         }
 
         public override ISemanticNode ParseSemantics(BranchParseNode node)
@@ -262,38 +212,6 @@ namespace PseudoEBNF.Parsing.Parsers
             Stack.Add(frame);
             head = frame;
             LastOperation = Operation.Push;
-        }
-
-        public override void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action)
-        {
-            if (IsLocked)
-            { throw new Exception(); }
-
-            Grammar.AttachAction(name, action);
-        }
-
-        public override void SetImplicit(string name)
-        {
-            if (IsLocked)
-            { throw new Exception(); }
-
-            Grammar.SetImplicit(name);
-        }
-
-        public override void DefineString(string name, string value)
-        {
-            if (IsLocked)
-            { throw new Exception(); }
-
-            Grammar.DefineString(name, value);
-        }
-
-        public override void DefineRegex(string name, string value)
-        {
-            if (IsLocked)
-            { throw new Exception(); }
-
-            Grammar.DefineRegex(name, value);
         }
     }
 }

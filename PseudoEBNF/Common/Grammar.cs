@@ -46,6 +46,15 @@ namespace PseudoEBNF.Common
             implicitNames = new List<string>();
         }
 
+        internal Grammar(Compatible c)
+            : base(c)
+        {
+            Super = new Supervisor();
+            tokens = new Dictionary<string, Token>();
+            rules = new Dictionary<string, NamedRule>();
+            implicitNames = new List<string>();
+        }
+
         private Grammar(Compatible c, Dictionary<string, Token> tokens, Dictionary<string, NamedRule> rules, List<string> implicitNames)
             : base(c)
         {
