@@ -1,7 +1,10 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PseudoEBNF;
 using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.PseudoEBNF;
 using PseudoEBNF.Semantics;
 
 namespace Tests
@@ -150,9 +153,8 @@ root = abc;
 {RuleName.Token} = {RuleName.Identifier} {RuleName.Equals} {RuleName.Literal} {RuleName.Semicolon};
 {RuleName.Rule} = {RuleName.Identifier} {RuleName.Equals} {RuleName.Expression} {RuleName.Semicolon};
 
-{RuleName.Assignment} = {RuleName.Token} | {RuleName.Rule};
 // This is a comment.
-{RuleName.Root} = {RuleName.Assignment} *{RuleName.Assignment};
+{RuleName.Root} = *({RuleName.Token} | {RuleName.Rule});
 ";
             var settings = new ParserSettings
             {
@@ -162,10 +164,48 @@ root = abc;
             };
             Parser parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
 
+            parser.AttachAction(RuleName.Whitespace, RuleActions.Whitespace);
+
+            parser.AttachAction(RuleName.String, RuleActions.String);
+            parser.AttachAction(RuleName.Regex, RuleActions.Regex);
+            parser.AttachAction(RuleName.Identifier, RuleActions.Identifier);
+
+            parser.AttachAction(RuleName.Repeat, RuleActions.Repeat);
+            parser.AttachAction(RuleName.Optional, RuleActions.Optional);
+            parser.AttachAction(RuleName.Not, RuleActions.Not);
+            parser.AttachAction(RuleName.Group, RuleActions.Group);
+
+            parser.AttachAction(RuleName.And, RuleActions.And);
+            parser.AttachAction(RuleName.Or, RuleActions.Or);
+
+            parser.AttachAction(RuleName.Token, (branch, recurse) =>
+            {
+                ISemanticNode name = recurse(branch.GetDescendant(0));
+                ISemanticNode value = recurse(branch.GetDescendant(2));
+
+                return new BranchSemanticNode((int)EbnfNodeType.Token, name, value);
+            });
+
+            parser.AttachAction(RuleName.Rule, (branch, recurse) =>
+            {
+                ISemanticNode name = recurse(branch.GetDescendant(0));
+                ISemanticNode value = recurse(branch.GetDescendant(2));
+
+                return new BranchSemanticNode((int)EbnfNodeType.Rule, name, value);
+            });
+
             parser.AttachAction(RuleName.Root, (branch, recurse) =>
             {
-                return null;
+                IEnumerable<ISemanticNode> rules = branch
+                    .Elements
+                    .Select(recurse);
+
+                return new BranchSemanticNode((int)EbnfNodeType.Root, branch.StartIndex, rules);
             });
+
+            parser.AttachAction(RuleName.Literal, RuleActions.Unwrap);
+            parser.AttachAction(RuleName.Expression, RuleActions.Unwrap);
+            parser.AttachAction(RuleName.SimpleExpression, RuleActions.Unwrap);
 
             parser.Lock();
 

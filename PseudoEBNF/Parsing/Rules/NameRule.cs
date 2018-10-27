@@ -1,9 +1,8 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Collections.Generic;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing.Parsers;
-using System;
-using System.Collections.Generic;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -13,7 +12,8 @@ namespace PseudoEBNF.Parsing.Rules
 
         public Grammar Grammar { get; }
 
-        public Rule Rule => Grammar.GetRule(Name);
+        private Rule rule;
+        public Rule Rule => rule ?? (rule = Grammar.GetRule(Name));
 
         public override IReadOnlyList<Rule> Children => new[] { Rule };
 
@@ -33,16 +33,13 @@ namespace PseudoEBNF.Parsing.Rules
             Name = name;
         }
 
-        public override Rule Clone()
-        {
-            return new NameRule(this, Grammar, Name);
-        }
+        public override Rule Clone() => new NameRule(this, Grammar, Name);
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
-            var rule = Grammar.GetRule(Name);
+            NamedRule rule = Grammar.GetRule(Name);
 
-            var match = rule.Match(lexemes);
+            Match<IParseNode> match = rule.Match(lexemes);
             if (match.Success)
             {
                 return new Match<IParseNode>(new BranchParseNode(this, match.Result.StartIndex, new[] { match.Result }), true);
