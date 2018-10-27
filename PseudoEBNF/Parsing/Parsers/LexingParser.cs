@@ -4,8 +4,6 @@ using System.Linq;
 using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing.Rules;
-using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF
 {
@@ -21,17 +19,6 @@ namespace PseudoEBNF
             IEnumerable<Lexeme> lexemes = Lex(input);
 
             return ParseSyntax(lexemes);
-        }
-
-        public override ISemanticNode ParseSemantics(BranchParseNode node)
-        {
-            if (!IsLocked)
-            { throw new Exception(); }
-
-            if (node.Rule is NamedRule named)
-            { return named.Action(node, ParseSemantics); }
-            else
-            { throw new Exception(); }
         }
 
         public BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes)

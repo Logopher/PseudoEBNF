@@ -4,7 +4,6 @@ using System.Linq;
 using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Rules;
-using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.Parsing.Parsers
 {
@@ -41,17 +40,6 @@ namespace PseudoEBNF.Parsing.Parsers
         public StackParser(Grammar grammar)
             : base(grammar)
         {
-        }
-
-        public override ISemanticNode ParseSemantics(BranchParseNode node)
-        {
-            if (!IsLocked)
-            { throw new Exception(); }
-
-            if (node.Rule is NamedRule named)
-            { return named.Action(node, ParseSemantics); }
-            else
-            { throw new Exception(); }
         }
 
         public override BranchParseNode ParseSyntax(string input)
@@ -203,10 +191,8 @@ namespace PseudoEBNF.Parsing.Parsers
             { throw new Exception(); }
 
             if (frame.Rule is NamedRule named)
-            {
-                Super.ReportHypothesis(named, Index);
-            }
-            //Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}? {frame.Rule}");
+            { Super.ReportHypothesis(named, Index); }
+
             Stack.Add(frame);
             head = frame;
             LastOperation = Operation.Push;

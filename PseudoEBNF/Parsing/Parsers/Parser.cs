@@ -57,7 +57,16 @@ namespace PseudoEBNF
 
         public abstract BranchParseNode ParseSyntax(string input);
 
-        public abstract ISemanticNode ParseSemantics(BranchParseNode node);
+        public ISemanticNode ParseSemantics(BranchParseNode node)
+        {
+            if (!IsLocked)
+            { throw new Exception(); }
+
+            if (node.Rule is NamedRule named)
+            { return named.Action(node, ParseSemantics); }
+            else
+            { throw new Exception(); }
+        }
 
         public void DefineRule(string name, Rule rule)
         {

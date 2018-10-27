@@ -1,14 +1,11 @@
 ﻿using System;
 using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.Parsing.Parsers
 {
     public class ParserManager : Parser
     {
-        public bool IsLocked => Grammar.IsLocked;
-
         private Parser parser;
 
         public ParserManager(Grammar grammar, ParserSettings settings)
@@ -55,8 +52,6 @@ namespace PseudoEBNF.Parsing.Parsers
                     throw new Exception();
             }
         }
-
-        public override ISemanticNode ParseSemantics(BranchParseNode node) => parser.ParseSemantics(node);
 
         public override BranchParseNode ParseSyntax(string input) => parser.ParseSyntax(input);
     }
