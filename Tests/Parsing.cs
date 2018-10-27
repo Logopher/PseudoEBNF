@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PseudoEBNF;
 using PseudoEBNF.Common;
 using PseudoEBNF.Parsing.Nodes;
@@ -212,7 +210,7 @@ root = abc;
 
             parser.Lock();
 
-            var result = parser.ParseSyntax(grammar);
+            BranchParseNode result = parser.ParseSyntax(grammar);
 
             Assert.AreEqual(grammar, result.MatchedText);
         }

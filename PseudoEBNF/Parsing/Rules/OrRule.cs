@@ -1,11 +1,11 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -41,36 +41,21 @@ namespace PseudoEBNF.Parsing.Rules
                 .ToList();
         }
 
-        public override Rule Clone()
-        {
-            return new OrRule(this, Children.Select(n => n.Clone()));
-        }
+        public override Rule Clone() => new OrRule(this, Children.Select(n => n.Clone()));
 
-        public override bool IsFull(Parser p)
-        {
-            return p.Nodes.Count == 1;
-        }
+        public override bool IsFull(Parser p) => p.Nodes.Count == 1;
 
-        public override bool IsComplete(Parser p)
-        {
-            return p.Nodes.Count == 1;
-        }
+        public override bool IsComplete(Parser p) => p.Nodes.Count == 1;
 
-        public override bool IsExhausted(Parser p)
-        {
-            return Children.Count <= p.RuleIndex;
-        }
+        public override bool IsExhausted(Parser p) => Children.Count <= p.RuleIndex;
 
-        public override string ToString()
-        {
-            return $"{{or {string.Join(" ", Children)}}}";
-        }
+        public override string ToString() => $"{{or {string.Join(" ", Children)}}}";
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
-            foreach (var rule in Children)
+            foreach (Rule rule in Children)
             {
-                var match = rule.Match(lexemes);
+                Match<IParseNode> match = rule.Match(lexemes);
                 if (match.Success)
                 {
                     return new Match<IParseNode>(match.Result, true);

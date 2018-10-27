@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PseudoEBNF.Common
+﻿namespace PseudoEBNF.Common
 {
     public static class RuleName
     {
@@ -11,7 +7,7 @@ namespace PseudoEBNF.Common
         public static readonly string String = "string";
         public static readonly string Regex = "regex";
         public static readonly string Literal = "literal";
-        public new static readonly string Equals = "equals";
+        public static new readonly string Equals = "equals";
         public static readonly string Semicolon = "semicolon";
         public static readonly string Pipe = "pipe";
         public static readonly string Asterisk = "asterisk";
@@ -34,7 +30,7 @@ namespace PseudoEBNF.Common
         public static readonly string Rule = "rule";
         public static readonly string Assignment = "assign";
         public static readonly string Root = "root";
-        
+
         public static readonly string Implicit = "im";
     }
 }

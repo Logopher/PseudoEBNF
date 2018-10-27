@@ -1,11 +1,11 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -31,16 +31,13 @@ namespace PseudoEBNF.Parsing.Rules
             Token = token;
         }
 
-        public override Rule Clone()
-        {
-            return new TokenRule(this, Token.Clone());
-        }
+        public override Rule Clone() => new TokenRule(this, Token.Clone());
 
         public Match<IParseNode> Match(string input, int index)
         {
-            var match = Token.Match(input, index);
+            Match<Lexeme> match = Token.Match(input, index);
 
-            if(match.Success)
+            if (match.Success)
             {
                 return new Match<IParseNode>(new LeafParseNode(this, index, match.Result), true);
             }
@@ -48,29 +45,17 @@ namespace PseudoEBNF.Parsing.Rules
             return new Match<IParseNode>(null, false);
         }
 
-        public override bool IsFull(Parser p)
-        {
-            throw new Exception();
-        }
+        public override bool IsFull(Parser p) => throw new Exception();
 
-        public override bool IsComplete(Parser p)
-        {
-            throw new Exception();
-        }
+        public override bool IsComplete(Parser p) => throw new Exception();
 
-        public override bool IsExhausted(Parser p)
-        {
-            throw new Exception();
-        }
+        public override bool IsExhausted(Parser p) => throw new Exception();
 
-        public override string ToString()
-        {
-            return $"{{rule {Token}}}";
-        }
+        public override string ToString() => $"{{rule {Token}}}";
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
-            var first = lexemes.FirstOrDefault();
+            Lexeme first = lexemes.FirstOrDefault();
             if (first?.Token.Guid == Token.Guid)
             {
                 return new Match<IParseNode>(new LeafParseNode(this, first.StartIndex, first), true);

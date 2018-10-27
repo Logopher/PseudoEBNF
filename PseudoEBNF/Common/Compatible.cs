@@ -17,7 +17,7 @@ namespace PseudoEBNF.Common
 
         public bool IsCompatibleWith(Compatible other)
         {
-            if(ReferenceEquals(other, null))
+            if (ReferenceEquals(other, null))
             { throw new NullReferenceException(); }
 
             return CompatibilityGuid == other.CompatibilityGuid;

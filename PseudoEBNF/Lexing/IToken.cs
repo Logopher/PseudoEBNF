@@ -1,5 +1,5 @@
-﻿using PseudoEBNF.Common;
-using System;
+﻿using System;
+using PseudoEBNF.Common;
 
 namespace PseudoEBNF.Lexing
 {
@@ -7,7 +7,7 @@ namespace PseudoEBNF.Lexing
     {
         public Token(Compatible c)
             : base(c)
-        {}
+        { }
 
         public abstract Guid Guid { get; }
 
@@ -19,9 +19,6 @@ namespace PseudoEBNF.Lexing
 
         public abstract bool Equals(Token other);
 
-        public override string ToString()
-        {
-            return $"{{token {Name}}}";
-        }
+        public override string ToString() => $"{{token {Name}}}";
     }
 }

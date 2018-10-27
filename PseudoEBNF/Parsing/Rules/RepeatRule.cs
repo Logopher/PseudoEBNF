@@ -1,11 +1,11 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -33,35 +33,17 @@ namespace PseudoEBNF.Parsing.Rules
             Children = new[] { rule };
         }
 
-        public override Rule Clone()
-        {
-            return new RepeatRule(this, Rule.Clone());
-        }
+        public override Rule Clone() => new RepeatRule(this, Rule.Clone());
 
-        public override bool IsFull(Parser p)
-        {
-            return false;
-        }
+        public override bool IsFull(Parser p) => false;
 
-        public override bool IsComplete(Parser p)
-        {
-            return true;
-        }
+        public override bool IsComplete(Parser p) => true;
 
-        public override bool IsExhausted(Parser p)
-        {
-            return false;
-        }
+        public override bool IsExhausted(Parser p) => false;
 
-        public override Rule GetChild(Parser p)
-        {
-            return Rule;
-        }
+        public override Rule GetChild(Parser p) => Rule;
 
-        public override string ToString()
-        {
-            return $"{{repeat {Rule}}}";
-        }
+        public override string ToString() => $"{{repeat {Rule}}}";
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
@@ -70,7 +52,7 @@ namespace PseudoEBNF.Parsing.Rules
 
             while (index < lexemes.Count)
             {
-                var match = Rule.Match(lexemes.GetRange(index, lexemes.Count - index));
+                Match<IParseNode> match = Rule.Match(lexemes.GetRange(index, lexemes.Count - index));
                 if (match.Success)
                 {
                     results.Add(match.Result);

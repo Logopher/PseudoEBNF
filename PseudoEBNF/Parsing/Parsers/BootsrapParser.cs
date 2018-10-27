@@ -1,9 +1,4 @@
-﻿using System;
-using PseudoEBNF.Common;
-using PseudoEBNF.Lexing;
-using PseudoEBNF.Parsing.Nodes;
-using PseudoEBNF.Parsing.Rules;
-using PseudoEBNF.Reporting;
+﻿using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.Parsing.Parsers

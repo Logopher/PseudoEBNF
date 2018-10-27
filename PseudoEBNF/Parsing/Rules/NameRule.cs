@@ -35,19 +35,6 @@ namespace PseudoEBNF.Parsing.Rules
 
         public override Rule Clone() => new NameRule(this, Grammar, Name);
 
-        public override Match<IParseNode> Match(List<Lexeme> lexemes)
-        {
-            NamedRule rule = Grammar.GetRule(Name);
-
-            Match<IParseNode> match = rule.Match(lexemes);
-            if (match.Success)
-            {
-                return new Match<IParseNode>(new BranchParseNode(this, match.Result.StartIndex, new[] { match.Result }), true);
-            }
-            else
-            {
-                return new Match<IParseNode>(null, false);
-            }
-        }
+        public override Match<IParseNode> Match(List<Lexeme> lexemes) => Rule.Match(lexemes);
     }
 }

@@ -1,9 +1,9 @@
-﻿using PseudoEBNF.Common;
-using PseudoEBNF.Lexing;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
 
 namespace Tests
 {
@@ -13,7 +13,7 @@ namespace Tests
 #pragma warning restore CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
 #pragma warning restore CS0659 // Type overrides Object.Equals(object o) but does not override Object.GetHashCode()
     {
-        readonly List<Lexeme> data = new List<Lexeme>();
+        private readonly List<Lexeme> data = new List<Lexeme>();
 
         public LexemeList(Compatible c)
             : base(c)
@@ -38,30 +38,15 @@ namespace Tests
             data.Add(item);
         }
 
-        public void Add(Token token, string text, int index)
-        {
-            Add(new Lexeme(this, token, text, index));
-        }
+        public void Add(Token token, string text, int index) => Add(new Lexeme(this, token, text, index));
 
-        public void Clear()
-        {
-            data.Clear();
-        }
+        public void Clear() => data.Clear();
 
-        public bool Contains(Lexeme item)
-        {
-            return data.Contains(item);
-        }
+        public bool Contains(Lexeme item) => data.Contains(item);
 
-        public void CopyTo(Lexeme[] array, int arrayIndex)
-        {
-            data.CopyTo(array, arrayIndex);
-        }
+        public void CopyTo(Lexeme[] array, int arrayIndex) => data.CopyTo(array, arrayIndex);
 
-        public int IndexOf(Lexeme item)
-        {
-            return data.IndexOf(item);
-        }
+        public int IndexOf(Lexeme item) => data.IndexOf(item);
 
         public void Insert(int index, Lexeme item)
         {
@@ -71,25 +56,13 @@ namespace Tests
             data.Insert(index, item);
         }
 
-        public bool Remove(Lexeme item)
-        {
-            return data.Remove(item);
-        }
+        public bool Remove(Lexeme item) => data.Remove(item);
 
-        public void RemoveAt(int index)
-        {
-            data.RemoveAt(index);
-        }
+        public void RemoveAt(int index) => data.RemoveAt(index);
 
-        public IEnumerator<Lexeme> GetEnumerator()
-        {
-            return data.GetEnumerator();
-        }
+        public IEnumerator<Lexeme> GetEnumerator() => data.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public override bool Equals(object obj)
         {
@@ -103,7 +76,7 @@ namespace Tests
 
         public bool Equals(IEnumerable<Lexeme> other)
         {
-            var list = other as IList<Lexeme> ?? other.ToList();
+            IList<Lexeme> list = other as IList<Lexeme> ?? other.ToList();
 
             if (list is LexemeList lexemeList && lexemeList.CompatibilityGuid != CompatibilityGuid)
             { throw new Exception(); }

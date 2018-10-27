@@ -1,5 +1,5 @@
-﻿using PseudoEBNF.Common;
-using System;
+﻿using System;
+using PseudoEBNF.Common;
 
 namespace PseudoEBNF.Lexing
 {

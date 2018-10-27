@@ -1,6 +1,6 @@
-﻿using PseudoEBNF.Common;
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
+using PseudoEBNF.Common;
 
 namespace PseudoEBNF.Lexing
 {
@@ -12,7 +12,7 @@ namespace PseudoEBNF.Lexing
 
         public Regex Regex { get; }
 
-        RegexToken(Compatible c, Guid guid, string name, Regex regex)
+        private RegexToken(Compatible c, Guid guid, string name, Regex regex)
             : base(c)
         {
             Guid = guid;
@@ -25,14 +25,11 @@ namespace PseudoEBNF.Lexing
         {
         }
 
-        public override Token Clone()
-        {
-            return new RegexToken(this, Guid, Name, Regex);
-        }
+        public override Token Clone() => new RegexToken(this, Guid, Name, Regex);
 
         public override Match<Lexeme> Match(string input, int index)
         {
-            var match = Regex.Match(input, index);
+            Match match = Regex.Match(input, index);
             if (match.Success)
             {
                 return new Match<Lexeme>(new Lexeme(this, this, match.Groups[0].Value, index), true);
@@ -43,10 +40,7 @@ namespace PseudoEBNF.Lexing
             }
         }
 
-        public bool Equals(RegexToken other)
-        {
-            return Guid == other.Guid;
-        }
+        public bool Equals(RegexToken other) => Guid == other.Guid;
 
         public override bool Equals(Token other)
         {
@@ -64,10 +58,7 @@ namespace PseudoEBNF.Lexing
             return Equals(regTok);
         }
 
-        public override int GetHashCode()
-        {
-            return -737073652 + Guid.GetHashCode();
-        }
+        public override int GetHashCode() => -737073652 + Guid.GetHashCode();
 
         public static bool operator ==(RegexToken a, RegexToken b)
         {

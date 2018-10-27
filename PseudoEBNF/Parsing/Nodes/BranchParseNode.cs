@@ -35,7 +35,7 @@ namespace PseudoEBNF.Parsing.Nodes
                 .Where(n => n != null)
                 .ToArray();
             var withoutImplicit = children
-                .Where(n => !(n.Rule is NameRule name && name.Name == RuleName.Implicit))
+                .Where(n => !(n.Rule is NamedRule named && named.Name == RuleName.Implicit))
                 .ToArray();
 
             if (withoutImplicit.Length == 1 && withoutImplicit.Single() is LeafParseNode leaf)

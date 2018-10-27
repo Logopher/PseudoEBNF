@@ -1,10 +1,10 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Parsers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -36,24 +36,18 @@ namespace PseudoEBNF.Parsing.Rules
                 .ToList();
         }
 
-        public override Rule Clone()
-        {
-            return new AndRule(this, Children.Select(n => n.Clone()));
-        }
+        public override Rule Clone() => new AndRule(this, Children.Select(n => n.Clone()));
 
-        public override string ToString()
-        {
-            return $"{{and {string.Join(" ", Children)}}}";
-        }
+        public override string ToString() => $"{{and {string.Join(" ", Children)}}}";
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
             var index = 0;
             var results = new List<IParseNode>();
 
-            foreach (var rule in Children)
+            foreach (Rule rule in Children)
             {
-                var match = rule.Match(lexemes.GetRange(index, lexemes.Count - index));
+                Match<IParseNode> match = rule.Match(lexemes.GetRange(index, lexemes.Count - index));
                 if (match.Success)
                 {
                     if (match.Result != null)

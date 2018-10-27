@@ -1,5 +1,5 @@
-﻿using PseudoEBNF.Common;
-using System;
+﻿using System;
+using PseudoEBNF.Common;
 
 namespace PseudoEBNF.Lexing
 {
@@ -11,7 +11,7 @@ namespace PseudoEBNF.Lexing
 
         public string Text { get; }
 
-        StringToken(Compatible c, Guid guid, string name, string text)
+        private StringToken(Compatible c, Guid guid, string name, string text)
             : base(c)
         {
             Guid = guid;
@@ -24,10 +24,7 @@ namespace PseudoEBNF.Lexing
         {
         }
 
-        public override Token Clone()
-        {
-            return new StringToken(this, Guid, Name, Text);
-        }
+        public override Token Clone() => new StringToken(this, Guid, Name, Text);
 
         public override Match<Lexeme> Match(string input, int index)
         {
@@ -57,15 +54,9 @@ namespace PseudoEBNF.Lexing
             return Equals(str);
         }
 
-        public bool Equals(StringToken other)
-        {
-            return Guid == other.Guid;
-        }
+        public bool Equals(StringToken other) => Guid == other.Guid;
 
-        public override int GetHashCode()
-        {
-            return -737073652 + Guid.GetHashCode();
-        }
+        public override int GetHashCode() => -737073652 + Guid.GetHashCode();
 
         public static bool operator ==(StringToken a, StringToken b)
         {

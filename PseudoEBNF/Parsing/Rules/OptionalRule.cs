@@ -1,11 +1,11 @@
-﻿using PseudoEBNF.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using PseudoEBNF.Common;
 using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
 using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Reporting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PseudoEBNF.Parsing.Rules
 {
@@ -33,35 +33,20 @@ namespace PseudoEBNF.Parsing.Rules
             Children = new[] { rule };
         }
 
-        public override Rule Clone()
-        {
-            return new OptionalRule(this, Rule.Clone());
-        }
+        public override Rule Clone() => new OptionalRule(this, Rule.Clone());
 
-        public override bool IsFull(Parser p)
-        {
-            return p.Nodes.Count == 1;
-        }
+        public override bool IsFull(Parser p) => p.Nodes.Count == 1;
 
-        public override bool IsComplete(Parser p)
-        {
-            return true;
-        }
+        public override bool IsComplete(Parser p) => true;
 
-        public override bool IsExhausted(Parser p)
-        {
-            return 0 < p.RuleIndex;
-        }
+        public override bool IsExhausted(Parser p) => 0 < p.RuleIndex;
 
-        public override string ToString()
-        {
-            return $"{{optional {Rule}}}";
-        }
+        public override string ToString() => $"{{optional {Rule}}}";
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes)
         {
-            var match = Rule.Match(lexemes);
-            var results = match.Success ? new[] { match.Result } : new IParseNode[0];
+            Match<IParseNode> match = Rule.Match(lexemes);
+            IParseNode[] results = match.Success ? new[] { match.Result } : new IParseNode[0];
             if (match.Success)
             {
                 return new Match<IParseNode>(new BranchParseNode(this, match.Result.StartIndex, new[] { match.Result }), true);

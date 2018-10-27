@@ -72,7 +72,15 @@ namespace PseudoEBNF.Parsing.Rules
                 Nodes.Add(node);
             }
 
-            internal Rule PeekRule() => Rule.GetChild(this);
+            internal Rule PeekRule()
+            {
+                Rule result = Rule.GetChild(this);
+
+                if (result is NameRule name)
+                { result = name.Rule; }
+
+                return result;
+            }
 
             internal Rule PopRule()
             {

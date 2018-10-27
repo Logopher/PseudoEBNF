@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PseudoEBNF.JavaScript
+﻿namespace PseudoEBNF.JavaScript
 {
     public enum JsNodeType
     {

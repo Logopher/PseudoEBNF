@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests
 {
@@ -17,7 +12,7 @@ namespace Tests
             var assembly = Assembly.GetCallingAssembly();
 
             using (Stream stream = assembly.GetManifestResourceStream(path))
-            using (StreamReader reader = new StreamReader(stream))
+            using (var reader = new StreamReader(stream))
             {
                 return reader.ReadToEnd();
             }

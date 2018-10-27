@@ -7,10 +7,7 @@ namespace Tests
 {
     public static class RuleActions
     {
-        internal static ISemanticNode Unwrap(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
-        {
-            return recurse(branch.GetDescendant(0));
-        }
+        internal static ISemanticNode Unwrap(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse) => recurse(branch.GetDescendant(0));
 
         internal static ISemanticNode String(BranchParseNode branch, Func<BranchParseNode, ISemanticNode> recurse)
         {
