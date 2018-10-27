@@ -57,6 +57,8 @@ namespace PseudoEBNF.Lexing
             var index = 0;
             while (index < input.Length)
             {
+                var remainder = input.Substring(index);
+
                 foreach (var token in @implicit)
                 {
                     var match = token.Match(input, index);
@@ -74,6 +76,8 @@ namespace PseudoEBNF.Lexing
                     var token = pair.Value;
 
                     Super.ReportHypothesis(token, index);
+
+                    var last = results.Last().MatchedText;
 
                     var match = token.Match(input, index);
                     if (match.Success)

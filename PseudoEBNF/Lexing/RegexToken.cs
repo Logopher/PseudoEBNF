@@ -21,7 +21,7 @@ namespace PseudoEBNF.Lexing
         }
 
         public RegexToken(Compatible c, string name, string pattern)
-            : this(c, Guid.NewGuid(), name, new Regex($@"\G{pattern}", RegexOptions.Compiled))
+            : this(c, Guid.NewGuid(), name, new Regex($@"\G{pattern}", RegexOptions.Compiled | RegexOptions.ExplicitCapture))
         {
         }
 

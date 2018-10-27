@@ -67,8 +67,8 @@ root = abc;
 
 {RuleName.Whitespace} = /\s+/;
 {RuleName.Identifier} = /\w(?:\w|\d)*/;
-{RuleName.String} = /""(\\[^""]|\\""|[^""])*""/;
-{RuleName.Regex} = /\/(\\[^\/]|\\\/|[^\/])+\//;
+{RuleName.String} = /""(\\\\[^""]|\\\\""|[^""])*""/;
+{RuleName.Regex} = /\/(\\\\[^\/]|\\\\\/|[^\/])+\//;
 
 {RuleName.And} = {RuleName.SimpleExpression} {RuleName.Expression};
 {RuleName.Or} = {RuleName.SimpleExpression} {RuleName.Pipe} {RuleName.Expression};
@@ -136,8 +136,9 @@ root = abc;
 
 {RuleName.Whitespace} = /\s+/;
 {RuleName.Identifier} = /\w(?:\w|\d)*/;
-{RuleName.String} = /""(\\[^""]|\\""|[^""])*""/;
-{RuleName.Regex} = /\/(\\[^\/]|\\\/|[^\/])*\//;
+{RuleName.String} = /""(\\\\[^""]|\\\\""|[^""])*""/;
+{RuleName.Regex} = /\/(\\\\[^\/]|\\\\\/|[^\/])+\//;
+{RuleName.LineComment} = /\/\/[^{"\r\n"}]*(?=[{"\r\n"}])/;
 
 {RuleName.And} = {RuleName.SimpleExpression} {RuleName.Expression};
 {RuleName.Or} = {RuleName.SimpleExpression} {RuleName.Pipe} {RuleName.Expression};
@@ -164,6 +165,7 @@ root = abc;
             };
             Parser parser = parserGen.SpawnParser(settings, grammar, RuleName.Whitespace, RuleName.LineComment);
 
+            /*
             parser.AttachAction(RuleName.Whitespace, RuleActions.Whitespace);
 
             parser.AttachAction(RuleName.String, RuleActions.String);
@@ -206,12 +208,13 @@ root = abc;
             parser.AttachAction(RuleName.Literal, RuleActions.Unwrap);
             parser.AttachAction(RuleName.Expression, RuleActions.Unwrap);
             parser.AttachAction(RuleName.SimpleExpression, RuleActions.Unwrap);
+            */
 
             parser.Lock();
 
-            ISemanticNode result = parser.Parse("a = b; c = d;");
+            var result = parser.ParseSyntax(grammar);
 
-            result.ToString();
+            Assert.AreEqual(grammar, result.MatchedText);
         }
 
         /*

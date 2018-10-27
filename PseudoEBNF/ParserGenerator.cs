@@ -30,7 +30,7 @@ namespace PseudoEBNF
             parser.DefineRegex(RuleName.Identifier, @"\w(?:\w|\d)*");
             parser.DefineRegex(RuleName.String, @"""(\\[^""]|\\""|[^""])*""");
             parser.DefineRegex(RuleName.Regex, @"/(\\[^/]|\\/|[^/])+/");
-            parser.DefineRegex(RuleName.LineComment, @"//[^\r\n]*(?=[\r\n])");
+            parser.DefineRegex(RuleName.LineComment, $@"//[^{"\r\n"}]*(?=[{"\r\n"}])");
 
             parser.DefineRule(RuleName.And,
                 parser.ReferenceRule(RuleName.SimpleExpression)
