@@ -1,8 +1,8 @@
-﻿using PseudoEBNF.Common;
-using PseudoEBNF.Reporting;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using PseudoEBNF.Common;
+using PseudoEBNF.Reporting;
 
 namespace PseudoEBNF.Lexing
 {
@@ -12,10 +12,10 @@ namespace PseudoEBNF.Lexing
 
         public Grammar Grammar { get; }
 
-        public Lexer(Supervisor super, Grammar grammar)
+        public Lexer(Grammar grammar)
             : base(grammar)
         {
-            Super = super;
+            Super = grammar.Super;
             Grammar = grammar;
         }
 
@@ -26,20 +26,11 @@ namespace PseudoEBNF.Lexing
             Grammar = new Grammar(this, Super);
         }
 
-        public void SetImplicit(string name)
-        {
-            Grammar.SetImplicit(name);
-        }
+        public void SetImplicit(string name) => Grammar.SetImplicit(name);
 
-        public void DefineRegex(string name, string pattern)
-        {
-            Grammar.DefineRegex(name, pattern);
-        }
+        public void DefineRegex(string name, string pattern) => Grammar.DefineRegex(name, pattern);
 
-        public void DefineString(string name, string text)
-        {
-            Grammar.DefineString(name, text);
-        }
+        public void DefineString(string name, string text) => Grammar.DefineString(name, text);
 
         public IEnumerable<Lexeme> Lex(string input)
         {
@@ -48,7 +39,7 @@ namespace PseudoEBNF.Lexing
             if (Grammar.Tokens.Any(pair => pair.Value.CompatibilityGuid != CompatibilityGuid))
             { throw new Exception(); }
 
-            var @implicit = Grammar.ImplicitNames
+            Token[] @implicit = Grammar.ImplicitNames
                 .Select(GetToken)
                 .Where(t => t != null)
                 .ToArray();
@@ -57,32 +48,28 @@ namespace PseudoEBNF.Lexing
             var index = 0;
             while (index < input.Length)
             {
-                var remainder = input.Substring(index);
-
-                foreach (var token in @implicit)
+                foreach (Token token in @implicit)
                 {
-                    var match = token.Match(input, index);
+                    Match<Lexeme> match = token.Match(input, index);
                     if (match.Success)
                     {
-                        var lexeme = match.Result;
+                        Lexeme lexeme = match.Result;
                         index += lexeme.Length;
                         results.Add(lexeme);
                     }
                 }
 
-                foreach (var pair in Grammar.Tokens)
+                foreach (KeyValuePair<string, Token> pair in Grammar.Tokens)
                 {
                     var name = pair.Key;
-                    var token = pair.Value;
+                    Token token = pair.Value;
 
                     Super.ReportHypothesis(token, index);
 
-                    var last = results.Last().MatchedText;
-
-                    var match = token.Match(input, index);
+                    Match<Lexeme> match = token.Match(input, index);
                     if (match.Success)
                     {
-                        var lexeme = match.Result;
+                        Lexeme lexeme = match.Result;
                         index += lexeme.Length;
                         results.Add(lexeme);
                         Super.ReportSuccess(token, lexeme.MatchedText);

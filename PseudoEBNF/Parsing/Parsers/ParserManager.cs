@@ -11,7 +11,7 @@ namespace PseudoEBNF.Parsing.Parsers
     public class ParserManager : Parser
     {
         public Supervisor Super { get; }
-        public Grammar Grammar { get; }
+        public override Grammar Grammar { get; }
         public bool IsLocked => Grammar.IsLocked;
 
         private Parser parser;
@@ -73,7 +73,7 @@ namespace PseudoEBNF.Parsing.Parsers
             Grammar.DefineRule(name, rule);
         }
 
-        public void DefineString(string name, string value)
+        public override void DefineString(string name, string value)
         {
             if (IsLocked)
             { throw new Exception(); }
@@ -81,7 +81,7 @@ namespace PseudoEBNF.Parsing.Parsers
             Grammar.DefineString(name, value);
         }
 
-        public void DefineRegex(string name, string value)
+        public override void DefineRegex(string name, string value)
         {
             if (IsLocked)
             { throw new Exception(); }
@@ -97,7 +97,7 @@ namespace PseudoEBNF.Parsing.Parsers
             Grammar.AttachAction(name, action);
         }
 
-        public void SetImplicit(string name)
+        public override void SetImplicit(string name)
         {
             if (IsLocked)
             { throw new Exception(); }

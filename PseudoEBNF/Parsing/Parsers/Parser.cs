@@ -26,6 +26,8 @@ namespace PseudoEBNF
             Character,
         }
 
+        public abstract Grammar Grammar { get; }
+
         public Parser()
             : base(Guid.NewGuid())
         { }
@@ -49,5 +51,11 @@ namespace PseudoEBNF
         public abstract NameRule ReferenceRule(string name);
 
         public abstract void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action);
+
+        public abstract void SetImplicit(string name);
+
+        public abstract void DefineRegex(string name, string value);
+
+        public abstract void DefineString(string name, string value);
     }
 }

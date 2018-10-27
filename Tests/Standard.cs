@@ -1,7 +1,8 @@
-﻿using PseudoEBNF;
+﻿using System;
+using PseudoEBNF;
 using PseudoEBNF.JavaScript;
+using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
-using System;
 
 namespace Tests
 {
@@ -11,24 +12,23 @@ namespace Tests
 document.getElementById('demo').innerHTML = Date()
 ";
 
-        public static Parser GetParser ()
+        public static Parser GetParser() => JavaScriptDefinition.GetParser();
+
+        public static Lexer GetLexer() => new Lexer(GetParser().Grammar);
+
+        public static LexemeList GetLexemes(Lexer lexer = null)
         {
-            return JavaScriptDefinition.GetParser();
-        }
+            lexer = lexer ?? GetLexer();
 
-        public static LexemeList GetLexemes(Parser parser = null)
-        {
-            parser = parser ?? GetParser();
+            Token ident = lexer.GetToken("ident");
+            Token singleString = lexer.GetToken("singleString");
+            Token ws = lexer.GetToken("ws");
+            Token dot = lexer.GetToken("dot");
+            Token leftParen = lexer.GetToken("leftParen");
+            Token rightParen = lexer.GetToken("rightParen");
+            Token equals = lexer.GetToken("equals");
 
-            var ident = parser.GetToken("ident");
-            var singleString = parser.GetToken("singleString");
-            var ws = parser.GetToken("ws");
-            var dot = parser.GetToken("dot");
-            var leftParen = parser.GetToken("leftParen");
-            var rightParen = parser.GetToken("rightParen");
-            var equals = parser.GetToken("equals");
-
-            var results = new LexemeList(parser)
+            var results = new LexemeList(lexer)
                 {
                     { ws, @"
 ", 0 },
@@ -55,20 +55,20 @@ document.getElementById('demo').innerHTML = Date()
 
         public static BranchParseNode GetParseTree()
         {
-            var parser = GetParser();
+            Parser parser = GetParser();
 
-            var dot = parser.GetRule("dot");
-            var leftParen = parser.GetRule("leftParen");
-            var rightParen = parser.GetRule("rightParen");
-            var equals = parser.GetRule("equals");
-            var ident = parser.GetRule("ident");
-            var singleString = parser.GetRule("singleString");
+            PseudoEBNF.Parsing.Rules.NamedRule dot = parser.GetRule("dot");
+            PseudoEBNF.Parsing.Rules.NamedRule leftParen = parser.GetRule("leftParen");
+            PseudoEBNF.Parsing.Rules.NamedRule rightParen = parser.GetRule("rightParen");
+            PseudoEBNF.Parsing.Rules.NamedRule equals = parser.GetRule("equals");
+            PseudoEBNF.Parsing.Rules.NamedRule ident = parser.GetRule("ident");
+            PseudoEBNF.Parsing.Rules.NamedRule singleString = parser.GetRule("singleString");
 
-            var root = parser.GetRule("root");
-            var statement = parser.GetRule("statement");
-            var assignment = parser.GetRule("assignment");
-            var property = parser.GetRule("property");
-            var functionCall = parser.GetRule("functionCall");
+            PseudoEBNF.Parsing.Rules.NamedRule root = parser.GetRule("root");
+            PseudoEBNF.Parsing.Rules.NamedRule statement = parser.GetRule("statement");
+            PseudoEBNF.Parsing.Rules.NamedRule assignment = parser.GetRule("assignment");
+            PseudoEBNF.Parsing.Rules.NamedRule property = parser.GetRule("property");
+            PseudoEBNF.Parsing.Rules.NamedRule functionCall = parser.GetRule("functionCall");
 
             throw new NotImplementedException();
         }

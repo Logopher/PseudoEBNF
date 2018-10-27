@@ -13,7 +13,7 @@ namespace PseudoEBNF
     public class LexingParser : Parser
     {
         public Supervisor Super { get; }
-        public Grammar Grammar { get; }
+        public override Grammar Grammar { get; }
         public bool IsLocked => Grammar.IsLocked;
 
         public LexingParser(Grammar grammar)
@@ -100,7 +100,7 @@ namespace PseudoEBNF
             if (!IsLocked)
             { throw new Exception(); }
 
-            var lexer = new Lexer(Super, Grammar);
+            var lexer = new Lexer(Grammar);
 
             return lexer.Lex(input);
         }
@@ -111,6 +111,30 @@ namespace PseudoEBNF
             { throw new Exception(); }
 
             Grammar.AttachAction(name, action);
+        }
+
+        public override void SetImplicit(string name)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.SetImplicit(name);
+        }
+
+        public override void DefineString(string name, string value)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineString(name, value);
+        }
+
+        public override void DefineRegex(string name, string value)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineRegex(name, value);
         }
     }
 }

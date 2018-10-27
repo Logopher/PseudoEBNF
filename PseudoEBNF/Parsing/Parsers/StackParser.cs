@@ -29,7 +29,7 @@ namespace PseudoEBNF.Parsing.Parsers
         }
 
         public Supervisor Super { get; }
-        public Grammar Grammar { get; }
+        public override Grammar Grammar { get; }
         public bool IsLocked => Grammar.IsLocked;
 
         private List<StackFrame> Stack { get; } = new List<StackFrame>();
@@ -270,6 +270,30 @@ namespace PseudoEBNF.Parsing.Parsers
             { throw new Exception(); }
 
             Grammar.AttachAction(name, action);
+        }
+
+        public override void SetImplicit(string name)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.SetImplicit(name);
+        }
+
+        public override void DefineString(string name, string value)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineString(name, value);
+        }
+
+        public override void DefineRegex(string name, string value)
+        {
+            if (IsLocked)
+            { throw new Exception(); }
+
+            Grammar.DefineRegex(name, value);
         }
     }
 }
