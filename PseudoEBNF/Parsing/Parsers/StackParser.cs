@@ -136,8 +136,6 @@ namespace PseudoEBNF.Parsing.Parsers
                 { Super.ReportFailure(named); }
             }
 
-            //Debug.WriteLine($"{Stack.Count}{new string('\t', Stack.Count % 20)}{symbol} {removedFrame.Rule}");
-
             return result;
         }
 

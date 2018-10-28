@@ -115,7 +115,7 @@ namespace PseudoEBNF
             parser.AttachAction(RuleName.SimpleExpression, RuleActions.Unwrap);
         }
 
-        public Parser SpawnParser(Parser parser, ParserSettings settings, string grammar, params string[] implicitNames)
+        public Grammar BuildGrammar(string grammar, params string[] implicitNames)
         {
             var resultGrammar = new Grammar();
 
@@ -166,9 +166,11 @@ namespace PseudoEBNF
                 }
             }
 
-            return new ParserManager(resultGrammar, settings);
+            return resultGrammar;
         }
 
+        public Parser SpawnParser(Parser parser, ParserSettings settings, string grammar, params string[] implicitNames) => new ParserManager(BuildGrammar(grammar, implicitNames), settings);
+        
         public Parser SpawnParser(ParserSettings settings, string grammar, params string[] implicitNames) => SpawnParser(parser, settings, grammar, implicitNames);
 
         private Rule Interpret(Grammar grammar, ISemanticNode node)

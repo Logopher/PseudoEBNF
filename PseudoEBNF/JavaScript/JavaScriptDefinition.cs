@@ -1,18 +1,21 @@
 ﻿using System.Linq;
+using PseudoEBNF.Common;
+using PseudoEBNF.Lexing;
 using PseudoEBNF.Parsing.Nodes;
+using PseudoEBNF.Parsing.Parsers;
 using PseudoEBNF.Semantics;
 
 namespace PseudoEBNF.JavaScript
 {
     public static class JavaScriptDefinition
     {
-        public static Parser GetParser()
+        public static Grammar GetGrammar()
         {
-            var grammar = $@"
+            var grammarString = $@"
 varKeyword = /\b(var)\b/;               // -/
 letKeyword = /\b(let)\b/;               // -/
 newKeyword = /\b(new)\b/;               // -/
-deleteKeyword = /\b(delete)\b/;         // X
+deleteKeyword = /\b(delete)\b/;         // X ?
 instanceofKeyword = /\b(instanceof)\b/; // X ?
 withKeyword = /\b(with)\b/;             // X
 voidKeyword = /\b(void)\b/;             // X
@@ -21,7 +24,7 @@ thisKeyword = /\b(this)\b/;             // X ?
 debuggerKeyword = /\b(debugger)\b/;     // X
 importKeyword = /\b(import)\b/;         // X
 classKeyword = /\b(class)\b/;           // X
-constKeyword = /\b(const)\b/;           // X
+constKeyword = /\b(const)\b/;           // X ?
 extendsKeyword = /\b(extends)\b/;       // X
 yieldKeyword = /\b(yield)\b/;           // X
 superKeyword = /\b(super)\b/;           // X
@@ -145,16 +148,15 @@ key = leftSquare expr3 rightSquare;
 argList = leftParen ?(expr3 *(comma expr3)) rightParen;
 expressionFragment = dotRef | key | argList;
 
-dotRefExpression = (expressionFragment dotRefExpression) | dotRef;
-keyExpression = (expressionFragment keyExpression) | key;
-argListExpression = (expressionFragment argListExpression) | argList;
+propertyFragments = (expressionFragment propertyFragments) | dotRef | key;
+functionCallFragments = (expressionFragment functionCallFragments) | argList;
 
 constructor = newKeyword functionCall;
 
 // == END expr0 DEFINITIONS ==
 
-functionCall = expr0 argListExpression;
-propertyReference = expr0 (dotRefExpression | keyExpression);
+functionCall = expr0 functionCallFragments;
+propertyReference = expr0 propertyFragments;
 
 // == END expr1 definitions ==
 
@@ -184,7 +186,7 @@ ternary = expr2 question expr3 colon expr3;
 // == END expr3 DEFINITIONS ==
 
 variable = localAssignment | validIdent;
-variableDecl = (varKeyword | letKeyword) variable *(comma variable);
+variableDecl = (varKeyword | letKeyword | constKeyword) variable *(comma variable);
 
 break = breakKeyword;
 continue = continueKeyword;
@@ -216,16 +218,10 @@ root = statement *statement;
 ";
 
             var parserGen = new ParserGenerator();
-            var settings = new ParserSettings
-            {
-                Algorithm = Parser.Algorithm.LL,
-                NestingType = Parser.NestingType.Stack,
-                Unit = Parser.Unit.Character,
-            };
-            Parser parser = parserGen.SpawnParser(settings, grammar, "ws", "lineComment", "blockComment");
 
-            //*
-            parser.AttachAction("root", (branch, recurse) =>
+            Grammar grammar = parserGen.BuildGrammar(grammarString, "ws", "lineComment", "blockComment");
+
+            grammar.AttachAction("root", (branch, recurse) =>
             {
                 ISemanticNode first = recurse(branch.GetDescendant(0));
                 ISemanticNode[] rest = branch.GetDescendant(1)
@@ -236,14 +232,14 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Root, first, rest);
             });
 
-            parser.AttachAction("statement", (branch, recurse) =>
+            grammar.AttachAction("statement", (branch, recurse) =>
             {
                 ISemanticNode stmt = recurse(branch.GetDescendant(0));
 
                 return new BranchSemanticNode((int)JsNodeType.Statement, stmt);
             });
 
-            parser.AttachAction("variableDecl", (branch, recurse) =>
+            grammar.AttachAction("variableDecl", (branch, recurse) =>
             {
                 ISemanticNode first = recurse(branch.GetDescendant(1, 0));
                 ISemanticNode[] rest = branch.GetDescendant(2)
@@ -254,7 +250,7 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Variable, first, rest);
             });
 
-            parser.AttachAction("localAssignment", (branch, recurse) =>
+            grammar.AttachAction("localAssignment", (branch, recurse) =>
             {
                 ISemanticNode lvalue = recurse(branch.GetDescendant(0));
                 ISemanticNode expr2 = recurse(branch.GetDescendant(2));
@@ -262,11 +258,11 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Assignment, lvalue, expr2);
             });
 
-            parser.AttachAction("propertyAssignment", RuleActions.PropertyAssignment);
+            grammar.AttachAction("propertyAssignment", RuleActions.PropertyAssignment);
 
-            parser.AttachAction("propertyReference", RuleActions.CompositeExpression);
+            grammar.AttachAction("propertyReference", RuleActions.CompositeExpression);
 
-            parser.AttachAction("argList", (branch, recurse) =>
+            grammar.AttachAction("argList", (branch, recurse) =>
             {
                 BranchParseNode args = branch.GetDescendant(1);
 
@@ -283,27 +279,27 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.ArgumentList, branch.StartIndex, new[] { first }.Concat(rest));
             });
 
-            parser.AttachAction("dotRef", (branch, recurse) =>
+            grammar.AttachAction("dotRef", (branch, recurse) =>
             {
                 ISemanticNode ident = recurse(branch.GetDescendant(1));
 
                 return new BranchSemanticNode((int)JsNodeType.DotReference, ident);
             });
 
-            parser.AttachAction("key", (branch, recurse) =>
+            grammar.AttachAction("key", (branch, recurse) =>
             {
                 ISemanticNode key = recurse(branch.GetDescendant(1));
 
                 return new BranchSemanticNode((int)JsNodeType.KeyReference, key);
             });
 
-            parser.AttachAction("functionCall", RuleActions.FunctionCall);
+            grammar.AttachAction("functionCall", RuleActions.FunctionCall);
 
-            parser.AttachAction("constructor", RuleActions.Constructor);
+            grammar.AttachAction("constructor", RuleActions.Constructor);
 
-            parser.AttachAction("expressionFragment", RuleActions.Unwrap);
+            grammar.AttachAction("expressionFragment", RuleActions.Unwrap);
 
-            parser.AttachAction("object", (branch, recurse) =>
+            grammar.AttachAction("object", (branch, recurse) =>
             {
                 BranchParseNode firstNode = branch.GetDescendant(1, 0);
 
@@ -319,7 +315,7 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Object, branch.StartIndex, first, rest);
             });
 
-            parser.AttachAction("propertyDef", (branch, recurse) =>
+            grammar.AttachAction("propertyDef", (branch, recurse) =>
             {
                 ISemanticNode ident = recurse(branch.GetDescendant(0));
                 ISemanticNode value = recurse(branch.GetDescendant(2));
@@ -327,7 +323,7 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.PropertyDefinition, ident, value);
             });
 
-            parser.AttachAction("anonFunction", (branch, recurse) =>
+            grammar.AttachAction("anonFunction", (branch, recurse) =>
             {
                 ISemanticNode paramList = recurse(branch.GetDescendant(1));
                 ISemanticNode body = recurse(branch.GetDescendant(2));
@@ -335,7 +331,7 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.AnonymousFunction, paramList, body);
             });
 
-            parser.AttachAction("namedFunction", (branch, recurse) =>
+            grammar.AttachAction("namedFunction", (branch, recurse) =>
             {
                 ISemanticNode name = recurse(branch.GetDescendant(1));
                 ISemanticNode paramList = recurse(branch.GetDescendant(2));
@@ -344,7 +340,7 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.NamedFunction, paramList, body);
             });
 
-            parser.AttachAction("paramList", (branch, recurse) =>
+            grammar.AttachAction("paramList", (branch, recurse) =>
             {
                 ISemanticNode first = recurse(branch.GetDescendant(1, 0));
                 ISemanticNode[] rest = branch.GetDescendant(1, 1)
@@ -355,7 +351,7 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.ParameterList, first, rest);
             });
 
-            parser.AttachAction("block", (branch, recurse) =>
+            grammar.AttachAction("block", (branch, recurse) =>
             {
                 ISemanticNode[] stmts = branch.GetDescendant(1)
                     .Elements
@@ -365,7 +361,7 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Block, branch.StartIndex, stmts);
             });
 
-            parser.AttachAction("bitwise", (branch, recurse) =>
+            grammar.AttachAction("bitwise", (branch, recurse) =>
             {
                 ISemanticNode left = recurse(branch.GetDescendant(0));
                 ISemanticNode right = recurse(branch.GetDescendant(2));
@@ -373,14 +369,14 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Bitwise, left, right);
             });
 
-            parser.AttachAction("bitNegation", (branch, recurse) =>
+            grammar.AttachAction("bitNegation", (branch, recurse) =>
             {
                 ISemanticNode operand = recurse(branch.GetDescendant(1));
 
                 return new BranchSemanticNode((int)JsNodeType.BitwiseNegation, operand);
             });
 
-            parser.AttachAction("logic", (branch, recurse) =>
+            grammar.AttachAction("logic", (branch, recurse) =>
             {
                 ISemanticNode left = recurse(branch.GetDescendant(0));
                 ISemanticNode right = recurse(branch.GetDescendant(2));
@@ -388,14 +384,14 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Logic, left, right);
             });
 
-            parser.AttachAction("logicNegation", (branch, recurse) =>
+            grammar.AttachAction("logicNegation", (branch, recurse) =>
             {
                 ISemanticNode operand = recurse(branch.GetDescendant(1));
 
                 return new BranchSemanticNode((int)JsNodeType.LogicNegation, operand);
             });
 
-            parser.AttachAction("math", (branch, recurse) =>
+            grammar.AttachAction("math", (branch, recurse) =>
             {
                 ISemanticNode left = recurse(branch.GetDescendant(0));
                 ISemanticNode right = recurse(branch.GetDescendant(2));
@@ -403,21 +399,21 @@ root = statement *statement;
                 return new BranchSemanticNode((int)JsNodeType.Math, left, right);
             });
 
-            parser.AttachAction("unaryMath", (branch, recurse) =>
+            grammar.AttachAction("unaryMath", (branch, recurse) =>
             {
                 ISemanticNode operand = recurse(branch.GetDescendant(1));
 
                 return new BranchSemanticNode((int)JsNodeType.UnaryMath, operand);
             });
 
-            parser.AttachAction("paren", (branch, recurse) =>
+            grammar.AttachAction("paren", (branch, recurse) =>
             {
                 ISemanticNode operand = recurse(branch.GetDescendant(1));
 
                 return new BranchSemanticNode((int)JsNodeType.Parenthetical, operand);
             });
 
-            parser.AttachAction("validIdent", (branch, recurse) =>
+            grammar.AttachAction("validIdent", (branch, recurse) =>
             {
                 branch = branch.GetDescendant(1);
 
@@ -427,7 +423,7 @@ root = statement *statement;
                 return new LeafSemanticNode((int)JsNodeType.Identifier, startIndex, ident);
             });
 
-            parser.AttachAction("doubleString", (branch, recurse) =>
+            grammar.AttachAction("doubleString", (branch, recurse) =>
             {
                 var text = branch.Leaf.MatchedText;
                 text = text
@@ -439,7 +435,7 @@ root = statement *statement;
                 return new LeafSemanticNode((int)JsNodeType.String, startIndex, text);
             });
 
-            parser.AttachAction("singleString", (branch, recurse) =>
+            grammar.AttachAction("singleString", (branch, recurse) =>
             {
                 var text = branch.Leaf.MatchedText;
                 text = text
@@ -451,9 +447,9 @@ root = statement *statement;
                 return new LeafSemanticNode((int)JsNodeType.String, startIndex, text);
             });
 
-            parser.AttachAction("string", RuleActions.Unwrap);
+            grammar.AttachAction("string", RuleActions.Unwrap);
 
-            parser.AttachAction("regex", (branch, recurse) =>
+            grammar.AttachAction("regex", (branch, recurse) =>
             {
                 var pattern = branch.Leaf.MatchedText;
                 pattern = pattern
@@ -465,7 +461,7 @@ root = statement *statement;
                 return new LeafSemanticNode((int)JsNodeType.RegularExpression, startIndex, pattern);
             });
 
-            parser.AttachAction("number", (branch, recurse) =>
+            grammar.AttachAction("number", (branch, recurse) =>
             {
                 var number = branch.Leaf.MatchedText;
                 var startIndex = branch.Leaf.StartIndex;
@@ -473,14 +469,29 @@ root = statement *statement;
                 return new LeafSemanticNode((int)JsNodeType.Number, startIndex, number);
             });
 
-            parser.AttachAction("expr0", RuleActions.Unwrap);
-            parser.AttachAction("expr1", RuleActions.Unwrap);
-            parser.AttachAction("expr2", RuleActions.Unwrap);
-            parser.AttachAction("expr3", RuleActions.Unwrap);
-            parser.AttachAction("assignment", RuleActions.Unwrap);
-            //*/
+            grammar.AttachAction("expr0", RuleActions.Unwrap);
+            grammar.AttachAction("expr1", RuleActions.Unwrap);
+            grammar.AttachAction("expr2", RuleActions.Unwrap);
+            grammar.AttachAction("expr3", RuleActions.Unwrap);
+            grammar.AttachAction("assignment", RuleActions.Unwrap);
+
+            return grammar;
+        }
+
+        public static Parser GetParser()
+        {
+            var settings = new ParserSettings
+            {
+                Algorithm = Parser.Algorithm.LL,
+                NestingType = Parser.NestingType.Stack,
+                Unit = Parser.Unit.Character,
+            };
+
+            Parser parser = new ParserManager(GetGrammar(), settings);
 
             return parser;
         }
+
+        public static Lexer GetLexer() => new Lexer(GetGrammar());
     }
 }

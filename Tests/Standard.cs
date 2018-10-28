@@ -14,7 +14,7 @@ document.getElementById('demo').innerHTML = Date()
 
         public static Parser GetParser() => JavaScriptDefinition.GetParser();
 
-        public static Lexer GetLexer() => new Lexer(GetParser().Grammar);
+        public static Lexer GetLexer() => JavaScriptDefinition.GetLexer();
 
         public static LexemeList GetLexemes(Lexer lexer = null)
         {
