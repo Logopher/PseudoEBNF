@@ -92,20 +92,16 @@ namespace PseudoEBNF.Parsing.Parsers
                 switch (action)
                 {
                     case Action.NextSibling:
-                        {
-                            AddNodeToHead(child);
+                        AddNodeToHead(child);
 
-                            AddNodeToHead(BuildNode(true));
+                        AddNodeToHead(BuildNode(true));
 
-                            PushFrame(Head.PopRule(), input, Index);
-                        }
+                        PushFrame(Head.PopRule(), input, Index);
                         break;
                     case Action.NextChild:
-                        {
-                            AddNodeToHead(child);
+                        AddNodeToHead(child);
 
-                            PushFrame(Head.PopRule(), input, Index);
-                        }
+                        PushFrame(Head.PopRule(), input, Index);
                         break;
                     case Action.Cancel:
                         LastOperation = Operation.Cancel;

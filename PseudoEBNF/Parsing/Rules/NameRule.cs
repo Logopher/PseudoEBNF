@@ -36,5 +36,7 @@ namespace PseudoEBNF.Parsing.Rules
         public override Rule Clone() => new NameRule(this, Grammar, Name);
 
         public override Match<IParseNode> Match(List<Lexeme> lexemes) => Rule.Match(lexemes);
+
+        public override string ToString() => $"{{rule {Name}}}";
     }
 }

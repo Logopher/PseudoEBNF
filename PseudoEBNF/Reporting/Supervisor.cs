@@ -53,11 +53,11 @@ namespace PseudoEBNF.Reporting
 
         public void ReportSuccess(NamedRule rule, string text)
         {
-            WriteLine($@"+ {rule.Name}
-{text}");
-
             Head.Success = true;
             var node = stack.Pop();
+
+            WriteLine($@"+ {rule.Name}
+{text}");
 
             if (node.Name == RuleName.Implicit)
             {

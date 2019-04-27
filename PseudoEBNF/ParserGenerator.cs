@@ -120,9 +120,7 @@ namespace PseudoEBNF
             var resultGrammar = new Grammar();
 
             foreach (var name in implicitNames)
-            {
-                resultGrammar.SetImplicit(name);
-            }
+            { resultGrammar.SetImplicit(name); }
 
             parser.Lock();
 
@@ -170,7 +168,7 @@ namespace PseudoEBNF
         }
 
         public Parser SpawnParser(Parser parser, ParserSettings settings, string grammar, params string[] implicitNames) => new ParserManager(BuildGrammar(grammar, implicitNames), settings);
-        
+
         public Parser SpawnParser(ParserSettings settings, string grammar, params string[] implicitNames) => SpawnParser(parser, settings, grammar, implicitNames);
 
         private Rule Interpret(Grammar grammar, ISemanticNode node)

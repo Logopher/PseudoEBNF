@@ -18,7 +18,12 @@ namespace PseudoEBNF
         {
             IEnumerable<Lexeme> lexemes = Lex(input);
 
-            return ParseSyntax(lexemes);
+            BranchParseNode result = ParseSyntax(lexemes);
+
+            if(result.MatchedText.Length != input.Length)
+            { throw new Exception(); }
+
+            return result;
         }
 
         public BranchParseNode ParseSyntax(IEnumerable<Lexeme> lexemes)

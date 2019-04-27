@@ -42,7 +42,7 @@ namespace PseudoEBNF
             Grammar = g;
             Super = Grammar.Super;
         }
-        
+
         public ISemanticNode Parse(string input)
         {
             if (!IsLocked)
@@ -108,12 +108,9 @@ namespace PseudoEBNF
             Grammar.SetImplicit(name);
         }
 
-        public void Lock()
+        public virtual void Lock()
         {
-            if (!IsLocked)
-            {
-                Grammar.Lock();
-            }
+            Grammar.Lock();
         }
 
         public NamedRule GetRule(string name)

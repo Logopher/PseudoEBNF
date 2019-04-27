@@ -11,8 +11,6 @@ namespace PseudoEBNF.Common
 {
     public class Grammar : Compatible
     {
-        private readonly Guid guid = Guid.NewGuid();
-
         public Rule RootRule => GetRule(RuleName.Root);
 
         public Supervisor Super { get; }
@@ -74,9 +72,11 @@ namespace PseudoEBNF.Common
 
         public void Lock()
         {
+            AssertIsNotLocked();
+
             DefineRule(RuleName.Implicit, new RepeatRule(this,
                 new OrRule(this, ImplicitNames
-                    .Select(GetRule)
+                    .Select(_GetRule)
                     .Where(r => r != null))));
 
             AttachAction(RuleName.Implicit, (n, r) => null);
@@ -84,44 +84,66 @@ namespace PseudoEBNF.Common
             IsLocked = true;
         }
 
-        public void DefineRule(string name, Rule rule)
+        private void AssertIsLocked()
+        {
+            if (!IsLocked)
+            { throw new InvalidOperationException("Already locked."); }
+        }
+
+        private void AssertIsNotLocked()
         {
             if (IsLocked)
-            {
-                throw new Exception();
-            }
+            { throw new InvalidOperationException("Already locked."); }
+        }
+
+        public void DefineRule(string name, Rule rule)
+        {
+            //var last = rule.Children.LastOrDefault();
+
+            AssertIsNotLocked();
 
             if (name == RuleName.Root)
-            {
-                rule = rule.And(new NameRule(this, this, RuleName.Implicit));
-            }
+            { rule = rule.And(new NameRule(this, this, RuleName.Implicit)); }
 
             var named = new NamedRule(this, Super, name, rule);
 
             rules.Add(name, named);
         }
 
-        public NamedRule GetRule(string name)
+        NamedRule _GetRule(string name)
         {
             Rules.TryGetValue(name, out NamedRule result);
             return result;
         }
 
-        public Token GetToken(string name)
+        Token _GetToken(string name)
         {
             Tokens.TryGetValue(name, out Token result);
             return result;
         }
 
+        public NamedRule GetRule(string name)
+        {
+            AssertIsLocked();
+
+            return _GetRule(name);
+        }
+
+        public Token GetToken(string name)
+        {
+            AssertIsLocked();
+
+            return _GetToken(name);
+        }
+
         internal void SetImplicit(string name)
         {
-            if (IsLocked)
-            { throw new Exception(); }
+            AssertIsNotLocked();
 
             implicitNames.Add(name);
         }
 
-        internal void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action) => GetRule(name).AttachAction(action);
+        internal void AttachAction(string name, Func<BranchParseNode, Func<BranchParseNode, ISemanticNode>, ISemanticNode> action) => _GetRule(name).AttachAction(action);
 
         public void DefineString(string name, string text) => DefineToken(name, new StringToken(this, name, text));
 
@@ -129,10 +151,7 @@ namespace PseudoEBNF.Common
 
         private void DefineToken(string name, Token token)
         {
-            if (IsLocked)
-            {
-                throw new Exception();
-            }
+            AssertIsNotLocked();
 
             tokens.Add(name, token);
 
@@ -147,8 +166,7 @@ namespace PseudoEBNF.Common
 
         public NameRule ReferenceRule(string name)
         {
-            if (IsLocked)
-            { throw new Exception(); }
+            AssertIsNotLocked();
 
             return new NameRule(this, this, name);
         }
